@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="mk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#1e293b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ТППЕ Распоред">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<title>ТППЕ Струмица – Распоред</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;padding:12px;padding-bottom:40px;background:#0f172a;color:#f1f5f9;font-family:system-ui,-apple-system,sans-serif;font-size:15px;max-width:640px;margin-left:auto;margin-right:auto}
+header{text-align:center;margin-bottom:14px;position:relative;border-radius:16px;padding:16px 12px 12px;overflow:hidden}
+header img{width:72px;height:96px;object-fit:contain;display:block;margin:0 auto 6px;position:relative;z-index:2}
+h1{font-size:1.3rem;margin:4px 0;position:relative;z-index:2}
+.welcome{font-size:1.05rem;font-weight:600;color:#e2e8f0;margin:4px 0 2px;position:relative;z-index:2}
+.sub{color:#94a3b8;font-size:.8rem;position:relative;z-index:2}
+.panel{background:#1e293b;border:1px solid #334155;border-radius:14px;padding:14px;margin-bottom:14px}
+h2{font-size:1.05rem;margin:0 0 12px}
+h3{font-size:.95rem;margin:0 0 6px;display:flex;align-items:center;gap:6px}
+button{background:#334155;color:#fff;border:0;border-radius:10px;padding:12px 14px;font-size:.95rem;font-weight:600;min-height:44px;cursor:pointer}
+button.green{background:#16a34a}button.blue{background:#2563eb}button.secondary{background:#334155}
+button.red{background:#dc2626}button.full{width:100%;margin-top:8px}
+button:active{opacity:.85}
+.controls{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.controls strong{flex:1;text-align:center}
+input[type=date],input[type=text],input[type=tel],input[type=password],textarea{background:#0f172a;color:#f1f5f9;border:1px solid #475569;border-radius:10px;padding:12px;font-size:1rem;width:100%}
+#date{margin-top:10px}
+.shift{margin-top:10px;padding:12px;border-radius:12px;background:#26364d;border-left:5px solid #64748b}
+.names{line-height:1.65;font-size:.92rem;color:#fff}
+.name-call{color:inherit;text-decoration:underline;text-underline-offset:2px;font-weight:600}
+.name-call:active{opacity:.7}
+.name-nocall{color:inherit}
+.team-1{border-left-color:#f87171}.team-1 h3,.team-1 .names{color:#fca5a5}
+.team-2{border-left-color:#fbbf24}.team-2 h3,.team-2 .names{color:#fcd34d}
+.team-3{border-left-color:#60a5fa}.team-3 h3,.team-3 .names{color:#93c5fd}
+.team-4{border-left-color:#4ade80}.team-4 h3,.team-4 .names{color:#86efac}
+.shield{display:inline-flex;width:22px;height:22px;vertical-align:middle;flex-shrink:0}
+.shield svg{width:22px;height:22px;display:block}
+#currentDuty{background:linear-gradient(135deg,#1e3a5f,#1e293b);border:1px solid #3b82f6;position:relative;overflow:hidden}
+#currentDuty::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#3b82f6,#60a5fa);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.now-badge{display:inline-block;background:#2563eb;color:#fff;font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:20px;margin-left:6px}
+.live-time{font-size:.8rem;color:#94a3b8;margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:.85rem;text-align:center}
+th,td{border:1px solid #334155;padding:9px 4px}th{background:#334155}
+tr[data-date]{cursor:pointer}
+.cell-t1{background:#7f1d1d;color:#fecaca;font-weight:700}
+.cell-t2{background:#78350f;color:#fde68a;font-weight:700}
+.cell-t3{background:#1e3a8a;color:#bfdbfe;font-weight:700}
+.cell-t4{background:#14532d;color:#bbf7d0;font-weight:700}
+.cell-holiday{box-shadow:inset 0 0 0 2px #fbbf24}
+.holiday-mark{display:block;font-size:.62rem;color:#fbbf24;margin-top:2px;font-weight:600;line-height:1.2;max-width:90px;margin-left:auto;margin-right:auto}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.legend span{display:inline-flex;align-items:center;gap:5px;font-size:.78rem;padding:4px 8px;border-radius:6px;background:#0f172a}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.note{color:#94a3b8;font-size:.8rem;margin-top:10px}
+.phone-list{list-style:none;padding:0;margin:0;counter-reset:phone}
+.phone-item{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid #334155;gap:10px}
+.service-list .phone-item{background:#1a2332;border-radius:10px;padding:12px;margin-bottom:8px;border:1px solid #334155}
+.phone-num-badge{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;border-radius:50%;background:#334155;color:#e2e8f0;font-size:.8rem;font-weight:700;margin-right:10px;flex-shrink:0}
+.phone-name{font-weight:600}
+.phone-number{font-size:.82rem;color:#94a3b8;display:block;margin-top:2px}
+.btn-call,.btn-sms{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:50%;color:#fff;text-decoration:none;font-size:1.1rem}
+.btn-call{background:#16a34a}.btn-sms{background:#2563eb}
+.phone-actions{display:flex;gap:8px}
+.search-box{margin-bottom:12px}
+.notice{background:#26364d;border-left:4px solid #fbbf24;border-radius:10px;padding:12px;margin-bottom:10px;position:relative}
+.notice-meta{font-size:.75rem;color:#94a3b8;margin-bottom:6px}
+.notice-text{white-space:pre-wrap;word-break:break-word;line-height:1.5}
+.notice-empty{color:#94a3b8;font-size:.9rem;text-align:center;padding:12px 0}
+.notice-del{position:absolute;top:8px;right:8px;background:#dc2626;border:0;color:#fff;min-width:32px;height:32px;border-radius:8px;font-size:.8rem;font-weight:700;padding:0 10px;min-height:32px;cursor:pointer}
+.notice{padding-right:48px}
+.notice-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.notice-actions button{flex:0 0 auto;min-height:36px;padding:8px 12px;font-size:.85rem}
+a{color:#60a5fa}
+#splash{position:fixed;inset:0;z-index:99999;background:#0f172a;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .45s,visibility .45s}
+#splash.hide{opacity:0;visibility:hidden;pointer-events:none}
+#splash img{width:100px;margin-bottom:16px}
+.loader{width:36px;height:36px;border:3px solid #334155;border-top-color:#3b82f6;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#offlineBanner{display:none;position:sticky;top:0;z-index:9990;background:#b45309;color:#fff;text-align:center;padding:10px 14px;font-size:.88rem;font-weight:600}
+#offlineBanner.show{display:block}
+#toast{display:none;position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:100001;
+background:#166534;color:#fff;padding:12px 18px;border-radius:12px;font-weight:700;font-size:.95rem;
+box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:90%;text-align:center}
+#toast.show{display:block;animation:toastIn .25s ease}
+#toast.err{background:#991b1b}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+#syncStatus{font-size:.75rem;color:#94a3b8;text-align:center;margin-bottom:8px}
+#alarmBanner{display:none;background:linear-gradient(90deg,#7f1d1d,#dc2626,#7f1d1d);background-size:200% 100%;animation:alarmMove 1.2s linear infinite;color:#fff;text-align:center;padding:14px;font-weight:800;font-size:1rem;border-radius:12px;margin-bottom:14px;border:2px solid #fca5a5}
+#alarmBanner.show{display:block}
+@keyframes alarmMove{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+header.alarm-on{background:radial-gradient(ellipse at center bottom,#431407 0%,#0f172a 70%)}
+header.alarm-on::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse 80% 50% at 20% 100%,rgba(239,68,68,.35),transparent 60%),radial-gradient(ellipse 70% 45% at 80% 100%,rgba(249,115,22,.3),transparent 55%),radial-gradient(ellipse 50% 40% at 50% 100%,rgba(251,191,36,.2),transparent 50%);animation:smoke 3s ease-in-out infinite alternate}
+header.alarm-on::after{content:"🔥";position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-size:1.4rem;z-index:1;opacity:.7;animation:flicker 1.5s infinite}
+@keyframes smoke{0%{opacity:.7;transform:translateY(0)}100%{opacity:1;transform:translateY(-6px)}}
+@keyframes flicker{0%,100%{opacity:.5}50%{opacity:.9}}
+
+
+
+
+
+
+
+
+
+.editor{display:none;margin-top:12px}
+.editor label{display:block;margin:14px 0 6px;font-size:.9rem;font-weight:600}
+.editor textarea{min-height:100px;resize:vertical;line-height:1.5}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.actions button{flex:1;min-width:120px}
+.phone-edit-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.phone-edit-row input{flex:1}
+.phone-edit-row button{padding:10px 12px;min-width:auto;flex-shrink:0}
+#newNoticeText{min-height:80px;margin-bottom:8px}
+#pinGate{position:fixed;inset:0;z-index:100000;background:rgba(15,23,42,.95);display:none;align-items:center;justify-content:center;padding:20px}
+#pinGate .panel{max-width:340px;width:100%}
+#pinGate input{margin:12px 0;text-align:center;font-size:1.2rem;letter-spacing:4px}
+#alarmBtn{width:100%;padding:16px;font-size:1.05rem;margin-bottom:8px}
+#alarmBtn.active{background:#991b1b;animation:pulse 1s infinite}
+
+.helmet-icon{display:inline-block;vertical-align:middle;margin-right:6px;flex-shrink:0}
+.teams-toggle{cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0}
+.teams-toggle .chevron{transition:transform .2s;font-size:1.1rem;color:#94a3b8}
+.teams-toggle.open .chevron{transform:rotate(180deg)}
+#teams{display:none}
+#teams.open{display:block}
+</style>
+</head>
+<body>
+<div id="splash">
+  <img src="icons/icon-192.png" alt="ТППЕ" width="100" height="100">
+  <div style="font-size:1.3rem;font-weight:700;margin:0 0 6px">ТППЕ СТРУМИЦА</div>
+  <div style="color:#94a3b8;font-size:.9rem;margin:0 0 20px">Распоред на смени</div>
+  <div class="loader"></div>
+</div>
+<div id="toast"></div>
+<div id="offlineBanner">📡 Нема интернет — се прикажуваат последните зачувани податоци.</div>
+<header id="mainHeader">
+  <img src="icons/icon-192.png" alt="Амблема" style="width:72px;height:96px;object-fit:contain">
+  <h1>ТППЕ СТРУМИЦА</h1>
+  <div class="welcome">Добредојдовте</div>
+  <div class="sub">Распоред на смени</div>
+</header>
+<div id="syncStatus">Се поврзува...</div>
+<div id="alarmBanner">🚨 АКТИВНА ИНТЕРВЕНЦИЈА — службата е на терен</div>
+<div class="panel" id="currentDuty">
+  <h2>🔴 Во моментов <span class="now-badge">LIVE</span></h2>
+  <div id="currentContent">Се вчитува...</div>
+  <div class="live-time" id="liveClock"></div>
+</div>
+<div class="panel"><h2>📢 Огласна табла</h2><div id="noticeBoard"></div></div>
+<div class="panel"><h2>☎️ Важни службени броеви</h2><ul class="phone-list service-list" id="serviceList"></ul></div>
+<div class="panel">
+  <h2>📅 Избери датум</h2>
+  <div class="controls"><button onclick="move(-1)">❮</button><strong id="dateLabel"></strong><button onclick="move(1)">❯</button></div>
+  <input id="date" type="date" onchange="render(window.IS_ADMIN)">
+</div>
+<div id="results"></div>
+<div class="panel">
+  <h2>📆 Месечен преглед</h2>
+  <div class="controls"><button onclick="monthMove(-1)">❮</button><strong id="monthLabel"></strong><button onclick="monthMove(1)">❯</button></div>
+  <div style="overflow-x:auto;margin-top:12px"><table id="calendar"></table></div>
+  <div class="legend">
+    <span><i style="background:#7f1d1d"></i> Смена 1</span>
+    <span><i style="background:#78350f"></i> Смена 2</span>
+    <span><i style="background:#1e3a8a"></i> Смена 3</span>
+    <span><i style="background:#14532d"></i> Смена 4</span>
+    <span>🎉 Празник</span>
+  </div>
+  <p class="note">🎉 = државен / верски празник во РС Македонија. Бојата = дежурна смена.</p>
+</div>
+<div class="panel">
+  <h2>📞 Телефонски именик</h2>
+  <div class="search-box"><input type="text" id="phoneSearch" placeholder="Пребарај..." oninput="filterPhones()"></div>
+  <ul class="phone-list" id="phoneList"></ul>
+</div>
+<div class="panel">
+  <h2 class="teams-toggle" id="teamsToggle" onclick="toggleTeams()">
+    <span><svg class="helmet-icon" viewBox="0 0 64 64" width="28" height="28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <path fill="#f97316" d="M32 6c-12 0-22 8-24 19h48C54 14 44 6 32 6z"/>
+  <path fill="#ea580c" d="M8 25h48v6c0 2-1 4-3 4H11c-2 0-3-2-3-4v-6z"/>
+  <path fill="#c2410c" d="M14 35h36v4H14z"/>
+  <path fill="#9a3412" d="M18 39h28v3c0 3-3 6-6 6H24c-3 0-6-3-6-6v-3z"/>
+  <ellipse fill="#fb923c" cx="32" cy="18" rx="8" ry="5" opacity=".35"/>
+</svg> <span>Состав на смени</span></span>
+    <span class="chevron">▼</span>
+  </h2>
+  <div id="teams"></div>
+  <p class="note">Кликни на насловот за да се отвори / затвори составот.</p>
+</div>
+<div class="panel">
+  <h2>📢 Управување со соопштенија</h2>
+  <textarea id="newNoticeText" placeholder="Ново соопштение..."></textarea>
+  <button class="blue full" onclick="addNotice()">➕ Објави</button>
+  <div id="noticeManageList" style="margin-top:14px"></div>
+  <button class="red full" id="btnClearNotices" onclick="clearAllNotices()" style="display:none;margin-top:8px">🗑️ Избриши ги сите соопштенија</button>
+</div>
+<div class="panel">
+  <h2>🚨 Аларм / интервенција</h2>
+  <button id="alarmBtn" class="red full" onclick="toggleAlarm()">🚨 АЛАРМ — вклучи интервенција</button>
+  <p class="note">Кога е вклучен, кај сите што ја отвориле апликацијата се гледа црвен банер и ефект на амблемот.</p>
+</div>
+<div class="panel">
+  <h2>⚙️ Администратор</h2>
+  <div class="actions">
+    <button class="secondary" onclick="toggleEditor()">Уреди состав / броеви</button>
+    <button class="green" onclick="saveToCloud()">☁ Зачувај во облак</button>
+  </div>
+  <div style="margin-top:16px;padding-top:14px;border-top:1px solid #334155">
+    <h3 style="color:#fbbf24;margin:0 0 10px;font-size:.95rem">🔐 Промена на лозинка</h3>
+    <label style="display:block;margin:8px 0 4px;font-size:.85rem">Тековна лозинка</label>
+    <input type="password" id="pinCurrent" placeholder="Тековна лозинка" autocomplete="current-password">
+    <label style="display:block;margin:8px 0 4px;font-size:.85rem">Нова лозинка</label>
+    <input type="password" id="pinNew" placeholder="Нова лозинка (мин. 4 знаци)" autocomplete="new-password">
+    <label style="display:block;margin:8px 0 4px;font-size:.85rem">Потврди нова лозинка</label>
+    <input type="password" id="pinNew2" placeholder="Повтори нова лозинка" autocomplete="new-password">
+    <button class="blue full" onclick="changeAdminPassword()" style="margin-top:10px">💾 Зачувај нова лозинка</button>
+    <p class="note" id="pinChangeMsg" style="margin-top:8px"></p>
+  </div>
+  <div class="editor" id="editor">
+    <h3 style="margin-top:16px;color:#fbbf24">Состав на смени</h3>
+    <div id="editFields"></div>
+    <h3 style="margin-top:20px;color:#fbbf24">Телефонски броеви (вработени)</h3>
+    <div id="phoneEditFields"></div>
+    <button class="secondary full" onclick="addPhoneRow()" style="margin-top:8px">+ Додај контакт</button>
+    <h3 style="margin-top:20px;color:#fbbf24">Важни службени броеви</h3>
+    <div id="serviceEditFields"></div>
+    <button class="secondary full" onclick="addServiceRow()" style="margin-top:8px">+ Додај службен број</button>
+    <div class="actions" style="margin-top:18px">
+      <button class="green" onclick="saveLocalThenCloud()">💾 Зачувај сè</button>
+    </div>
+  </div>
+</div>
+<div id="pinGate">
+  <div class="panel">
+    <h2 style="text-align:center">🔐 Админ пристап</h2>
+    <p class="note" style="text-align:center">Внесете ја админ лозинката</p>
+    <input type="password" id="pinInput" placeholder="••••" maxlength="20">
+    <button class="green full" onclick="checkPin()">Влез</button>
+    <p class="note" id="pinError" style="color:#f87171;text-align:center;display:none">Погрешна лозинка</p>
+  </div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+
+<script>
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB6yZwW88e6pNEuoy0M6yAFv_5v_7G8_HM",
+  authDomain: "tppestrumica-859e5.firebaseapp.com",
+  projectId: "tppestrumica-859e5",
+  storageBucket: "tppestrumica-859e5.firebasestorage.app",
+  messagingSenderId: "569570752369",
+  appId: "1:569570752369:web:eb7d3bf12365296e5928d0",
+  measurementId: "G-P8P0ND72H8"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+
+const SHIELD_COLORS = {1:"#f87171",2:"#fbbf24",3:"#60a5fa",4:"#4ade80"};
+function shield(n){
+  const c = SHIELD_COLORS[n] || "#94a3b8";
+  return `<span class="shield" title="Смена ${n}"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="${c}" stroke="#0f172a" stroke-width="1" d="M12 2l8 3v6c0 5.25-3.4 9.74-8 11-4.6-1.26-8-5.75-8-11V5l8-3z"/></svg></span>`;
+}
+// Празници во РС Македонија (фиксни + православен Велигден за 2025-2027)
+const MK_HOLIDAYS = {
+  "01-01":"Нова година","01-07":"Божик","05-01":"Ден на трудот",
+  "05-24":"Св. Кирил и Методиј","08-02":"Илинден","09-08":"Независимост",
+  "10-11":"Ден на востанието","10-23":"Денот на МРО","12-08":"Св. Климент Охридски",
+  // Православен Велигден и поврзани (пресметани)
+  "2025-04-18":"Велики петок","2025-04-20":"Велигден","2025-04-21":"Велигден",
+  "2026-04-10":"Велики петок","2026-04-12":"Велигден","2026-04-13":"Велигден",
+  "2027-04-30":"Велики петок","2027-05-02":"Велигден","2027-05-03":"Велигден"
+};
+function holidayName(y,m,d){
+  const md = String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");
+  const full = y+"-"+md;
+  return MK_HOLIDAYS[full] || MK_HOLIDAYS[md] || null;
+}
+const DEFAULT_TEAMS = {
+  1: ["ТОMОВ","СТОИЛОВ","КОЗАРОВ","ЕФТИМОВ","СТОЈКОВ","КУЗМАНОВ","КАМБЕРОВ","ДИМИТРУШЕВ","ШИРИЌ"],
+  2: ["ГОНЕВ","МИТЕВ","БАЛТАКОВ","РИСТОВСКИ","МАРЈАН","МАЛЧЕВ","ДЕЈАН","НАКОВ","ПАНЧЕ"],
+  3: ["ЈАНАКИЕВ","АПОСТОЛОВ","КАРКАЛАШЕВ","ШИЛИНОВ","МЕНТИНОВ","СПАСОВ","МИЛУШЕВ","ВУЧКОВ","СТОИЛОВ Б."],
+  4: ["ДИКОВ","СТАНКОВ","ВЕЛКОВ","ТАКОВСКИ","ЈАНКУЛОВ","КАРАКАШЕВ","КИКИРЕКОВ","ИЛЕ","МИЛКОВСКИ"]
+};
+const DEFAULT_SERVICE = {"Дежурен центар":"","Директор":"","Полиција 192":"192","Итна помош 194":"194","Противпожарна 193":"193"};
+let teams = JSON.parse(JSON.stringify(DEFAULT_TEAMS));
+let phones = {};
+let servicePhones = JSON.parse(JSON.stringify(DEFAULT_SERVICE));
+let notices = [];
+let gallery = [];
+let alarm = { active: false };
+const cycle = [1,3,4,1,2,4,3,2];
+const anchor = new Date(2026,9,30,7);
+let monthDate = new Date();
+function mod(n,m){return ((n%m)+m)%m}
+function getSlot(date,hour){
+  const target=new Date(date.getFullYear(),date.getMonth(),date.getDate(),hour);
+  const i=mod(Math.floor((target-anchor)/43200000),8);
+  const duty=cycle[i],standby=cycle[mod(i+1,8)],next=cycle[mod(i+2,8)];
+  const free=[1,2,3,4].find(x=>x!==duty&&x!==standby&&x!==next);
+  return {duty,standby,next,free};
+}
+function names(n){
+  return (teams[n]||[]).map(name=>{
+    const tel=(phones[name]||"").replace(/\s+/g,"");
+    if(tel){
+      return `<a href="tel:${tel}" class="name-call" title="Повикај">${name}</a>`;
+    }
+    return `<span class="name-nocall" title="Нема број">${name}</span>`;
+  }).join(" • ");
+}
+function updateAlarmUI(){
+  const banner=document.getElementById("alarmBanner");
+  const header=document.getElementById("mainHeader");
+  const btn=document.getElementById("alarmBtn");
+  if(alarm && alarm.active){
+    banner.classList.add("show");
+    header.classList.add("alarm-on");
+    if(btn){btn.classList.add("active");btn.textContent="🛑 ИСКЛУЧИ АЛАРМ — интервенција активна";}
+  } else {
+    banner.classList.remove("show");
+    header.classList.remove("alarm-on");
+    if(btn){btn.classList.remove("active");btn.textContent="🚨 АЛАРМ — вклучи интервенција";}
+  }
+}
+function updateCurrentDuty(){
+  const now=new Date();
+  const hour=now.getHours();
+  const isDay=hour>=7&&hour<19;
+  let slotDate=now, slotHour=7;
+  if(!isDay){
+    slotHour=19;
+    if(hour<7) slotDate=new Date(now.getFullYear(),now.getMonth(),now.getDate()-1);
+  }
+  const slot=getSlot(slotDate,slotHour);
+  // Тековен период и што е следно за приправната
+  const periodLabel=isDay?"Дневна смена (07:00–19:00)":"Ноќна смена (19:00–07:00)";
+  const standbyFor=isDay?"приправна за ноќна (од 19:00)":"приправна за дневна (од 07:00)";
+  const nextFor=isDay?"наредна (после ноќната)":"наредна (после дневната)";
+  const untilChange=isDay?
+    (19-hour)+"ч до смена на ноќна":
+    (hour>=19?(24-hour+7):(7-hour))+"ч до смена на дневна";
+
+  document.getElementById("currentContent").innerHTML=
+    `<div class="shift team-${slot.duty}">
+      <h3>${shield(slot.duty)} Дежурна — Смена ${slot.duty}</h3>
+      <p style="margin:6px 0 2px;color:#94a3b8;font-size:.85rem">${periodLabel}</p>
+      <div class="names" style="font-size:1rem">${names(slot.duty)}</div>
+    </div>
+    <div class="shift team-${slot.standby}" style="margin-top:8px">
+      <h3>${shield(slot.standby)} Приправна — Смена ${slot.standby}</h3>
+      <p style="margin:4px 0;color:#94a3b8;font-size:.85rem">${standbyFor}</p>
+      <div class="names">${names(slot.standby)}</div>
+    </div>
+    <div class="shift team-${slot.next}" style="margin-top:8px">
+      <h3>${shield(slot.next)} Наредна — Смена ${slot.next}</h3>
+      <p style="margin:4px 0;color:#94a3b8;font-size:.85rem">${nextFor}</p>
+      <div class="names">${names(slot.next)}</div>
+    </div>
+    <div class="shift team-${slot.free}" style="margin-top:8px">
+      <h3>${shield(slot.free)} Слободна — Смена ${slot.free}</h3>
+      <div class="names">${names(slot.free)}</div>
+    </div>
+    <p class="note" style="margin-top:10px">Редослед: дежурна → приправна → наредна → слободна. ${untilChange}.</p>`;
+  document.getElementById("liveClock").textContent=now.toLocaleString("mk-MK",{weekday:"long",day:"2-digit",month:"long",hour:"2-digit",minute:"2-digit",second:"2-digit"});
+}
+
+function shiftCard(title,s){
+  return `<div class="shift team-${s.duty}"><h3>${shield(s.duty)} ${title} — Смена ${s.duty}</h3><p><b>Дежурна:</b> <span class="names">${names(s.duty)}</span></p></div>
+    <div class="shift team-${s.standby}"><p style="display:flex;align-items:center;gap:6px"><b>${shield(s.standby)} Приправна — Смена ${s.standby}:</b></p><div class="names">${names(s.standby)}</div></div>
+    <div class="shift team-${s.next}"><p style="display:flex;align-items:center;gap:6px"><b>${shield(s.next)} Наредна — Смена ${s.next}:</b></p><div class="names">${names(s.next)}</div></div>
+    <div class="shift team-${s.free}"><p style="display:flex;align-items:center;gap:6px"><b>${shield(s.free)} Слободна — Смена ${s.free}:</b></p><div class="names">${names(s.free)}</div></div>`;
+}
+function renderNotices(admin){
+  const board=document.getElementById("noticeBoard");
+  const sorted=[...notices].sort((a,b)=>b.ts-a.ts);
+  if(!notices.length){
+    board.innerHTML='<div class="notice-empty">Нема активни соопштенија.</div>';
+  } else {
+    board.innerHTML=sorted.map(n=>{
+      const del=admin?`<button class="notice-del" onclick="deleteNotice('${n.id}')" title="Избриши">Избриши</button>`:"";
+      return `<div class="notice">${del}<div class="notice-meta">${n.date||""}</div><div class="notice-text">${(n.text||"").replace(/</g,"&lt;")}</div></div>`;
+    }).join("");
+  }
+  const manage=document.getElementById("noticeManageList");
+  const clearBtn=document.getElementById("btnClearNotices");
+  if(manage){
+    if(!notices.length){
+      manage.innerHTML='<p class="note">Нема соопштенија за бришење.</p>';
+      if(clearBtn) clearBtn.style.display="none";
+    } else {
+      manage.innerHTML='<p class="note" style="margin-bottom:8px">Активни соопштенија — бришење:</p>'+sorted.map(n=>
+        `<div class="notice" style="padding-right:12px">
+          <div class="notice-meta">${n.date||""}</div>
+          <div class="notice-text">${(n.text||"").replace(/</g,"&lt;")}</div>
+          <div class="notice-actions"><button class="red" onclick="deleteNotice('${n.id}')">🗑️ Избриши</button></div>
+        </div>`
+      ).join("");
+      if(clearBtn) clearBtn.style.display="block";
+    }
+  }
+}
+function clearAllNotices(){
+  if(!requirePin()) return;
+  if(!confirm("Избриши ГИ СИТЕ соопштенија?")) return;
+  notices=[];
+  render(true);
+  saveToCloud();
+}
+
+function renderServiceList(){
+  const list=document.getElementById("serviceList");
+  const entries=Object.entries(servicePhones||{}).filter(([k])=>k.trim()).sort((a,b)=>a[0].localeCompare(b[0],"mk"));
+  list.innerHTML=entries.map(([name,num],i)=>{
+    const clean=(num||"").replace(/\s+/g,"");
+    return `<li class="phone-item"><div style="display:flex;align-items:flex-start">
+      <span class="phone-num-badge">${i+1}</span>
+      <div><span class="phone-name">${name}</span><span class="phone-number">${num||"—"}</span></div></div>
+      ${clean?`<div class="phone-actions"><a class="btn-call" href="tel:${clean}">📞</a><a class="btn-sms" href="sms:${clean}">💬</a></div>`:""}</li>`;
+  }).join("")||'<p class="note">Нема службени броеви.</p>';
+}
+function renderPhoneList(filter=""){
+  const list=document.getElementById("phoneList");
+  const q=(filter||"").trim().toLowerCase();
+  const entries=Object.entries(phones||{}).filter(([n,num])=>!q||n.toLowerCase().includes(q)||(num||"").includes(q)).sort((a,b)=>a[0].localeCompare(b[0],"mk"));
+  list.innerHTML=entries.map(([name,num],i)=>{
+    const clean=(num||"").replace(/\s+/g,"");
+    return `<li class="phone-item"><div style="display:flex;align-items:flex-start">
+      <span class="phone-num-badge">${i+1}</span>
+      <div><span class="phone-name">${name}</span><span class="phone-number">${num||"—"}</span></div></div>
+      ${clean?`<div class="phone-actions"><a class="btn-call" href="tel:${clean}">📞</a><a class="btn-sms" href="sms:${clean}">💬</a></div>`:""}</li>`;
+  }).join("")||'<p class="note">Нема внесени броеви.</p>';
+}
+function filterPhones(){renderPhoneList(document.getElementById("phoneSearch").value)}
+function toggleTeams(){
+  const box=document.getElementById("teams");
+  const tog=document.getElementById("teamsToggle");
+  if(!box||!tog) return;
+  box.classList.toggle("open");
+  tog.classList.toggle("open");
+}
+function showToast(msg, isErr){
+  const t=document.getElementById("toast");
+  if(!t){alert(msg);return;}
+  t.textContent=msg;
+  t.className="show"+(isErr?" err":"");
+  clearTimeout(window._toastTimer);
+  window._toastTimer=setTimeout(()=>{t.className="";},2500);
+}
+
+function render(admin){
+  const val=document.getElementById("date").value;if(!val)return;
+  const [y,m,d]=val.split("-").map(Number),date=new Date(y,m-1,d);
+  document.getElementById("dateLabel").textContent=date.toLocaleDateString("mk-MK",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
+  // Дневна/ноќна детали се прикажуваат во LIVE делот
+  const res=document.getElementById("results");
+  if(res) res.innerHTML="";
+  drawCalendar();
+  document.getElementById("teams").innerHTML=[1,2,3,4].map(n=>`<div class="shift team-${n}"><h3>${shield(n)} Смена ${n}</h3><div class="names">${names(n)}</div></div>`).join("");
+  renderPhoneList();renderServiceList();renderNotices(!!admin);updateAlarmUI();
+}
+function move(n){
+  const el=document.getElementById("date"),[y,m,d]=el.value.split("-").map(Number);
+  const x=new Date(y,m-1,d+n);
+  el.value=`${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}`;
+  render(window.IS_ADMIN);
+}
+function monthMove(n){monthDate=new Date(monthDate.getFullYear(),monthDate.getMonth()+n,1);drawCalendar()}
+function drawCalendar(){
+  const y=monthDate.getFullYear(),m=monthDate.getMonth();
+  document.getElementById("monthLabel").textContent=monthDate.toLocaleDateString("mk-MK",{month:"long",year:"numeric"});
+  let html="<tr><th>Датум</th><th>Ден</th><th>Ноќ</th></tr>";
+  const days=new Date(y,m+1,0).getDate(),selected=document.getElementById("date").value;
+  for(let d=1;d<=days;d++){
+    const date=new Date(y,m,d),a=getSlot(date,7),b=getSlot(date,19);
+    const key=`${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    const hol=holidayName(y,m,d);
+    const sel=key===selected?"outline:2px solid #fbbf24;outline-offset:-2px;":"";
+    const holClass=hol?" cell-holiday":"";
+    const holTxt=hol?`<span class="holiday-mark">🎉 ${hol}</span>`:"";
+    html+=`<tr data-date="${key}" style="${sel}" onclick="chooseDay('${key}')" title="${hol||""}">
+      <td class="${holClass}">${String(d).padStart(2,"0")}${holTxt}</td>
+      <td class="cell-t${a.duty}">${a.duty}</td>
+      <td class="cell-t${b.duty}">${b.duty}</td></tr>`;
+  }
+  document.getElementById("calendar").innerHTML=html;
+}
+function chooseDay(v){document.getElementById("date").value=v;render(window.IS_ADMIN);window.scrollTo(0,0)}
+function applyData(data){
+  if(!data) return;
+  if(data.teams) teams=data.teams;
+  if(data.phones) phones=data.phones;
+  if(data.servicePhones) servicePhones=data.servicePhones;
+  if(data.notices) notices=data.notices;
+  if(data.gallery) gallery=data.gallery;
+  if(data.alarm) alarm=data.alarm; else alarm={active:false};
+  if(data.adminPin){ setAdminPin(data.adminPin); }
+  try{localStorage.setItem("tppeCache",JSON.stringify({teams,phones,servicePhones,notices,gallery,alarm}))}catch(e){}
+  render(window.IS_ADMIN);
+  updateCurrentDuty();
+}
+
+
+window.IS_ADMIN = true;
+const DEFAULT_PIN = "tppe2026";
+let adminPin = localStorage.getItem("tppeAdminPin") || DEFAULT_PIN;
+let unlocked = sessionStorage.getItem("tppeAdminOk")==="1";
+function getAdminPin(){ return localStorage.getItem("tppeAdminPin") || adminPin || DEFAULT_PIN; }
+function setAdminPin(p){
+  adminPin = p;
+  localStorage.setItem("tppeAdminPin", p);
+}
+function checkPin(){
+  if(document.getElementById("pinInput").value===getAdminPin()){
+    unlocked=true;sessionStorage.setItem("tppeAdminOk","1");
+    document.getElementById("pinGate").style.display="none";
+    document.getElementById("pinError").style.display="none";
+  } else document.getElementById("pinError").style.display="block";
+}
+function requirePin(){
+  if(!unlocked){document.getElementById("pinGate").style.display="flex";return false;}
+  return true;
+}
+function changeAdminPassword(){
+  if(!requirePin()) return;
+  const cur = (document.getElementById("pinCurrent")||{}).value || "";
+  const n1 = (document.getElementById("pinNew")||{}).value || "";
+  const n2 = (document.getElementById("pinNew2")||{}).value || "";
+  const msg = document.getElementById("pinChangeMsg");
+  if(cur !== getAdminPin()){
+    if(msg){msg.style.color="#f87171";msg.textContent="Погрешна тековна лозинка.";}
+    return;
+  }
+  if(n1.length < 4){
+    if(msg){msg.style.color="#f87171";msg.textContent="Новата лозинка мора да има барем 4 знаци.";}
+    return;
+  }
+  if(n1 !== n2){
+    if(msg){msg.style.color="#f87171";msg.textContent="Новите лозинки не се совпаѓаат.";}
+    return;
+  }
+  setAdminPin(n1);
+  // persist to cloud with other data
+  const payloadData = payload();
+  payloadData.adminPin = n1;
+  db.collection("appdata").doc("main").set(payloadData)
+    .then(()=>{
+      if(msg){msg.style.color="#4ade80";msg.textContent="Лозинката е успешно променета.";}
+      ["pinCurrent","pinNew","pinNew2"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+    })
+    .catch(err=>{
+      if(msg){msg.style.color="#f87171";msg.textContent="Грешка: "+err.message;}
+    });
+}
+function payload(){return {teams,phones,servicePhones,notices,gallery,alarm,adminPin:getAdminPin(),updatedAt:Date.now()};}
+function saveToCloud(){
+  if(!requirePin()) return;
+  document.getElementById("syncStatus").textContent="Се зачувува...";
+  document.getElementById("syncStatus").style.color="#fbbf24";
+  db.collection("appdata").doc("main").set(payload())
+    .then(()=>{try{localStorage.setItem("tppeCache",JSON.stringify(payload()))}catch(e){}
+      document.getElementById("syncStatus").textContent="● Зачувано во облак";
+      document.getElementById("syncStatus").style.color="#4ade80";
+      if(typeof showToast==="function") showToast("✓ Зачувано во облак");})
+    .catch(err=>{document.getElementById("syncStatus").textContent="Грешка: "+err.message;
+      document.getElementById("syncStatus").style.color="#f87171";
+      if(typeof showToast==="function") showToast("Грешка: "+err.message,true); else alert("Грешка: "+err.message);});
+}
+function toggleAlarm(){
+  // Алармот не бара лозинка
+  alarm={active:!alarm.active,startedAt:Date.now()};
+  updateAlarmUI();
+  // зачувај во облак без PIN (директно)
+  const payloadData={teams,phones,servicePhones,notices,gallery,alarm,adminPin:(typeof getAdminPin==="function"?getAdminPin():undefined),updatedAt:Date.now()};
+  document.getElementById("syncStatus").textContent="Се зачувува аларм...";
+  document.getElementById("syncStatus").style.color="#fbbf24";
+  db.collection("appdata").doc("main").set(payloadData)
+    .then(()=>{
+      try{localStorage.setItem("tppeCache",JSON.stringify(payloadData))}catch(e){}
+      document.getElementById("syncStatus").textContent="● Алармот е ажуриран";
+      document.getElementById("syncStatus").style.color="#4ade80";
+      if(typeof showToast==="function") showToast(alarm.active?"🚨 Алармот е ВКЛУЧЕН":"Алармот е исклучен");
+    })
+    .catch(err=>{
+      document.getElementById("syncStatus").textContent="Грешка: "+err.message;
+      document.getElementById("syncStatus").style.color="#f87171";
+      if(typeof showToast==="function") showToast("Грешка: "+err.message,true);
+    });
+}
+function addNotice(){
+  if(!requirePin()) return;
+  const ta=document.getElementById("newNoticeText");
+  const text=(ta.value||"").trim();
+  if(!text){alert("Напиши соопштение.");return;}
+  const now=new Date();
+  notices.unshift({id:"n"+Date.now(),text,ts:now.getTime(),date:now.toLocaleString("mk-MK",{weekday:"short",day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})});
+  ta.value="";render(true);saveToCloud();
+}
+function deleteNotice(id){
+  if(!requirePin()) return;
+  if(!confirm("Избриши соопштение?"))return;
+  notices=notices.filter(n=>n.id!==id);render(true);saveToCloud();
+}
+function toggleEditor(){
+  if(!requirePin()) return;
+  const el=document.getElementById("editor");
+  if(el.style.display==="block"){el.style.display="none";return;}
+  buildEditor();el.style.display="block";
+}
+function buildEditor(){
+  document.getElementById("editFields").innerHTML=[1,2,3,4].map(n=>
+    `<label>Смена ${n}</label><textarea id="team${n}">${(teams[n]||[]).join("\n")}</textarea>`
+  ).join("");
+  const pc=document.getElementById("phoneEditFields");pc.innerHTML="";
+  const pe=Object.entries(phones||{});
+  if(!pe.length) addPhoneRow(); else pe.forEach(([n,num])=>addPhoneRow(n,num));
+  const sc=document.getElementById("serviceEditFields");sc.innerHTML="";
+  const se=Object.entries(servicePhones||{});
+  if(!se.length) addServiceRow(); else se.forEach(([n,num])=>addServiceRow(n,num));
+}
+function addPhoneRow(name="",num=""){
+  const row=document.createElement("div");row.className="phone-edit-row";
+  row.innerHTML=`<input type="text" placeholder="Име" value="${(name||"").replace(/"/g,"&quot;")}"><input type="tel" placeholder="070..." value="${(num||"").replace(/"/g,"&quot;")}"><button class="secondary" type="button" onclick="this.parentElement.remove()">✕</button>`;
+  document.getElementById("phoneEditFields").appendChild(row);
+}
+function addServiceRow(name="",num=""){
+  const row=document.createElement("div");row.className="phone-edit-row";
+  row.innerHTML=`<input type="text" placeholder="Назив" value="${(name||"").replace(/"/g,"&quot;")}"><input type="tel" placeholder="070..." value="${(num||"").replace(/"/g,"&quot;")}"><button class="secondary" type="button" onclick="this.parentElement.remove()">✕</button>`;
+  document.getElementById("serviceEditFields").appendChild(row);
+}
+function collectEditorData(){
+  const updated={};
+  for(let n=1;n<=4;n++){const el=document.getElementById("team"+n);if(el) updated[n]=el.value.split(/\n|,/).map(x=>x.trim()).filter(Boolean);}
+  if(Object.keys(updated).length) teams=updated;
+  const np={};document.querySelectorAll("#phoneEditFields .phone-edit-row").forEach(row=>{const i=row.querySelectorAll("input");if(i[0].value.trim()) np[i[0].value.trim()]=i[1].value.trim();});
+  phones=np;
+  const ns={};document.querySelectorAll("#serviceEditFields .phone-edit-row").forEach(row=>{const i=row.querySelectorAll("input");if(i[0].value.trim()) ns[i[0].value.trim()]=i[1].value.trim();});
+  servicePhones=ns;
+}
+function saveLocalThenCloud(){collectEditorData();render(true);updateCurrentDuty();saveToCloud();}
+
+try{const cached=JSON.parse(localStorage.getItem("tppeCache")||"null");if(cached)applyData(cached);}catch(e){}
+db.collection("appdata").doc("main").onSnapshot(
+  (snap)=>{
+    if(snap.exists){applyData(snap.data());document.getElementById("syncStatus").textContent="● Синхронизирано";document.getElementById("syncStatus").style.color="#4ade80";}
+    else document.getElementById("syncStatus").textContent="Нема податоци од админ уште";
+  },
+  (err)=>{document.getElementById("syncStatus").textContent="Офлајн / грешка";document.getElementById("syncStatus").style.color="#fbbf24";}
+);
+function hideSplash(){const s=document.getElementById("splash");if(s){s.classList.add("hide");setTimeout(()=>s.remove(),500)}}
+window.addEventListener("load",()=>setTimeout(hideSplash,800));
+setTimeout(hideSplash,2500);
+function updateOnlineStatus(){const b=document.getElementById("offlineBanner");if(navigator.onLine)b.classList.remove("show");else b.classList.add("show")}
+window.addEventListener("online",updateOnlineStatus);
+window.addEventListener("offline",updateOnlineStatus);
+updateOnlineStatus();
+const today=new Date();
+document.getElementById("date").value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+render(window.IS_ADMIN);updateCurrentDuty();setInterval(updateCurrentDuty,1000);
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}))}
+</script>
+</body>
+</html>
