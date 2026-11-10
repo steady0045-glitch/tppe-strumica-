@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-<title>ТППЕ Струмица – Админ</title>
+<title>ТППЕ Струмица – Распоред</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;padding:12px;padding-bottom:40px;background:#0f172a;color:#f1f5f9;font-family:system-ui,-apple-system,sans-serif;font-size:15px;max-width:640px;margin-left:auto;margin-right:auto}
@@ -31,6 +31,9 @@ input[type=date],input[type=text],input[type=tel],input[type=password],textarea{
 #date{margin-top:10px}
 .shift{margin-top:10px;padding:12px;border-radius:12px;background:#26364d;border-left:5px solid #64748b}
 .names{line-height:1.65;font-size:.92rem;color:#fff}
+.name-call{color:inherit;text-decoration:underline;text-underline-offset:2px;font-weight:600}
+.name-call:active{opacity:.7}
+.name-nocall{color:inherit}
 .team-1{border-left-color:#f87171}.team-1 h3,.team-1 .names{color:#fca5a5}
 .team-2{border-left-color:#fbbf24}.team-2 h3,.team-2 .names{color:#fcd34d}
 .team-3{border-left-color:#60a5fa}.team-3 h3,.team-3 .names{color:#93c5fd}
@@ -126,31 +129,13 @@ header.alarm-on::after{content:"🔥";position:absolute;bottom:4px;left:50%;tran
 .teams-toggle.open .chevron{transform:rotate(180deg)}
 #teams{display:none}
 #teams.open{display:block}
-
-.chat-profile{margin:10px 0}
-.chat-profile label{display:block;font-size:.82rem;color:#cbd5e1;margin:0 0 6px;font-weight:600}
-.chat-status{font-size:.76rem;color:#94a3b8;margin:8px 0}
-.chat-messages{height:300px;overflow-y:auto;overscroll-behavior:contain;background:#0b1220;border:1px solid #334155;border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:9px}
-.chat-empty{color:#94a3b8;text-align:center;font-size:.88rem;margin:auto;padding:20px 8px}
-.chat-message{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:9px 11px;max-width:94%;align-self:flex-start;overflow-wrap:anywhere}
-.chat-message .chat-meta{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:5px}
-.chat-message .chat-sender{font-size:.82rem;font-weight:700;color:#7dd3fc}
-.chat-message .chat-time{font-size:.68rem;color:#94a3b8;white-space:nowrap}
-.chat-message .chat-body{font-size:.92rem;line-height:1.45;white-space:pre-wrap;color:#f1f5f9}
-.chat-delete{margin-top:7px;padding:5px 9px;min-width:0;font-size:.72rem;background:#7f1d1d;color:#fff;border:1px solid #b91c1c;border-radius:7px;cursor:pointer}
-.chat-delete:hover{background:#991b1b}
-
-.chat-compose{display:flex;gap:8px;align-items:stretch;margin-top:9px}
-.chat-compose textarea{flex:1;min-width:0;resize:vertical;min-height:48px}
-.chat-compose button{min-width:92px;align-self:stretch;margin:0}
-
 </style>
 </head>
 <body>
 <div id="splash">
   <img src="icons/icon-192.png" alt="ТППЕ" width="100" height="100">
   <div style="font-size:1.3rem;font-weight:700;margin:0 0 6px">ТППЕ СТРУМИЦА</div>
-  <div style="color:#94a3b8;font-size:.9rem;margin:0 0 20px">Администраторска верзија</div>
+  <div style="color:#94a3b8;font-size:.9rem;margin:0 0 20px">Распоред на смени</div>
   <div class="loader"></div>
 </div>
 <div id="toast"></div>
@@ -159,10 +144,9 @@ header.alarm-on::after{content:"🔥";position:absolute;bottom:4px;left:50%;tran
   <img src="icons/icon-192.png" alt="Амблема" style="width:72px;height:96px;object-fit:contain">
   <h1>ТППЕ СТРУМИЦА</h1>
   <div class="welcome">Добредојдовте</div>
-  <div class="sub">Администраторска верзија</div>
+  <div class="sub">Распоред на смени</div>
 </header>
 <div id="syncStatus">Се поврзува...</div>
-<button type="button" id="soundEnableBtn" class="secondary full" style="margin:0 0 10px" onclick="tppeEnableSound()">🔊 Активирај звук</button>
 <div id="alarmBanner">🚨 АКТИВНА ИНТЕРВЕНЦИЈА — службата е на терен</div>
 <div class="panel" id="currentDuty">
   <h2>🔴 Во моментов <span class="now-badge">LIVE</span></h2>
@@ -170,25 +154,6 @@ header.alarm-on::after{content:"🔥";position:absolute;bottom:4px;left:50%;tran
   <div class="live-time" id="liveClock"></div>
 </div>
 <div class="panel"><h2>📢 Огласна табла</h2><div id="noticeBoard"></div></div>
-
-<div class="panel" id="liveChatPanel">
-  <h2>💬 Заеднички LIVE CHAT <span class="now-badge">LIVE</span></h2>
-  <p class="note">Еден разговор за сите колеги. Внеси го твоето име и напиши порака.</p>
-  <div class="chat-profile">
-    <label for="chatName">Твоето име и презиме</label>
-    <input id="chatName" type="text" maxlength="60" placeholder="Име и презиме" autocomplete="name">
-  </div>
-  <div id="chatStatus" class="chat-status">Се поврзува со разговорот...</div>
-  <div id="chatMessages" class="chat-messages" aria-live="polite">
-    <div class="chat-empty">Сè уште нема пораки. Започни разговор.</div>
-  </div>
-  <div class="chat-compose">
-    <textarea id="chatText" rows="2" maxlength="1000" placeholder="Напиши порака..." onkeydown="chatEnterSend(event)"></textarea>
-    <button class="blue" type="button" onclick="sendChatMessage()">➤ Испрати</button>
-  </div>
-  <p class="note">Името се зачувува на овој уред за следното користење.</p>
-</div>
-
 <div class="panel"><h2>☎️ Важни службени броеви</h2><ul class="phone-list service-list" id="serviceList"></ul></div>
 <div class="panel">
   <h2>📅 Избери датум</h2>
@@ -216,12 +181,13 @@ header.alarm-on::after{content:"🔥";position:absolute;bottom:4px;left:50%;tran
 </div>
 <div class="panel">
   <h2 class="teams-toggle" id="teamsToggle" onclick="toggleTeams()">
-    <span><svg class="helmet-icon" viewBox="0 0 32 32" width="28" height="28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <circle cx="11" cy="10" r="4" fill="none" stroke="#38bdf8" stroke-width="2.2"/>
-      <circle cx="22" cy="11" r="3.3" fill="none" stroke="#60a5fa" stroke-width="2"/>
-      <path d="M3.5 25c.5-5 3.2-7.5 7.5-7.5s7 2.5 7.5 7.5" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round"/>
-      <path d="M18 19c1-.9 2.2-1.4 4-1.4 3.6 0 5.7 2.2 6 6.4" fill="none" stroke="#60a5fa" stroke-width="2.1" stroke-linecap="round"/>
-    </svg> <span>Состав на смени</span></span>
+    <span><svg class="helmet-icon" viewBox="0 0 64 64" width="28" height="28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <path fill="#f97316" d="M32 6c-12 0-22 8-24 19h48C54 14 44 6 32 6z"/>
+  <path fill="#ea580c" d="M8 25h48v6c0 2-1 4-3 4H11c-2 0-3-2-3-4v-6z"/>
+  <path fill="#c2410c" d="M14 35h36v4H14z"/>
+  <path fill="#9a3412" d="M18 39h28v3c0 3-3 6-6 6H24c-3 0-6-3-6-6v-3z"/>
+  <ellipse fill="#fb923c" cx="32" cy="18" rx="8" ry="5" opacity=".35"/>
+</svg> <span>Состав на смени</span></span>
     <span class="chevron">▼</span>
   </h2>
   <div id="teams"></div>
@@ -244,6 +210,17 @@ header.alarm-on::after{content:"🔥";position:absolute;bottom:4px;left:50%;tran
   <div class="actions">
     <button class="secondary" onclick="toggleEditor()">Уреди состав / броеви</button>
     <button class="green" onclick="saveToCloud()">☁ Зачувај во облак</button>
+  </div>
+  <div style="margin-top:16px;padding-top:14px;border-top:1px solid #334155">
+    <h3 style="color:#fbbf24;margin:0 0 10px;font-size:.95rem">🔐 Промена на лозинка</h3>
+    <label style="display:block;margin:8px 0 4px;font-size:.85rem">Тековна лозинка</label>
+    <input type="password" id="pinCurrent" placeholder="Тековна лозинка" autocomplete="current-password">
+    <label style="display:block;margin:8px 0 4px;font-size:.85rem">Нова лозинка</label>
+    <input type="password" id="pinNew" placeholder="Нова лозинка (мин. 4 знаци)" autocomplete="new-password">
+    <label style="display:block;margin:8px 0 4px;font-size:.85rem">Потврди нова лозинка</label>
+    <input type="password" id="pinNew2" placeholder="Повтори нова лозинка" autocomplete="new-password">
+    <button class="blue full" onclick="changeAdminPassword()" style="margin-top:10px">💾 Зачувај нова лозинка</button>
+    <p class="note" id="pinChangeMsg" style="margin-top:8px"></p>
   </div>
   <div class="editor" id="editor">
     <h3 style="margin-top:16px;color:#fbbf24">Состав на смени</h3>
@@ -284,171 +261,6 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-
-// Звучни известувања за нови соопштенија и активен аларм.
-let tppePendingSounds=[];
-let tppeAudioContext=null;
-window._tppeAudioUnlocked=false;
-
-function tppeGetAudioContext(){
-  const AC=window.AudioContext||window.webkitAudioContext;
-  if(!AC)return null;
-  tppeAudioContext=tppeAudioContext||new AC();
-  return tppeAudioContext;
-}
-function tppeToneNow(kind){
-  const patterns=kind==="alarm"?[520,760,520,760]:[880,660];
-  const ctx=tppeGetAudioContext();
-  if(!ctx || ctx.state!=="running")return;
-  const start=ctx.currentTime;
-  patterns.forEach((freq,i)=>{
-    const osc=ctx.createOscillator();
-    const gain=ctx.createGain();
-    osc.type=kind==="alarm"?"sawtooth":"sine";
-    osc.frequency.value=freq;
-    gain.gain.setValueAtTime(0.0001,start+i*0.22);
-    gain.gain.exponentialRampToValueAtTime(kind==="alarm"?0.13:0.075,start+i*0.22+0.025);
-    gain.gain.exponentialRampToValueAtTime(0.0001,start+i*0.22+0.17);
-    osc.connect(gain);gain.connect(ctx.destination);
-    osc.start(start+i*0.22);osc.stop(start+i*0.22+0.18);
-  });
-}
-function tppeTone(kind){
-  if(!window._tppeAudioUnlocked){tppePendingSounds.push(kind);return;}
-  const ctx=tppeGetAudioContext();
-  if(!ctx)return;
-  if(ctx.state==="suspended"){
-    ctx.resume().then(()=>tppeToneNow(kind)).catch(()=>tppePendingSounds.push(kind));
-  }else tppeToneNow(kind);
-}
-function tppePlayPendingSounds(){
-  window._tppeAudioUnlocked=true;
-  const ctx=tppeGetAudioContext();
-  if(!ctx)return;
-  const flush=()=>{
-    const pending=tppePendingSounds.splice(0);
-    pending.forEach(kind=>tppeToneNow(kind));
-  };
-  if(ctx.state==="suspended")ctx.resume().then(flush).catch(()=>{});
-  else flush();
-}
-function tppeEnableSound(){
-  window._tppeAudioUnlocked=true;
-  const ctx=tppeGetAudioContext();
-  if(!ctx)return;
-  const finish=()=>{
-    const pending=tppePendingSounds.splice(0);
-    pending.forEach(kind=>tppeToneNow(kind));
-    tppeToneNow("notice"); // краток тест-сигнал
-    const b=document.getElementById("soundEnableBtn");
-    if(b)b.textContent="🔊 Звук е активиран";
-  };
-  if(ctx.state==="suspended")ctx.resume().then(finish).catch(()=>{});
-  else finish();
-}
-window.addEventListener("pointerdown",tppePlayPendingSounds,{once:true});
-window.addEventListener("keydown",tppePlayPendingSounds,{once:true});
-
-function checkIncomingAlerts(data){
-  if(!data)return;
-  const newest=(data.notices||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0))[0];
-  if(newest){
-    const key="tppeNoticeSounded_"+String(newest.id||newest.ts||"notice");
-    if(!sessionStorage.getItem(key)){
-      sessionStorage.setItem(key,"1");
-      tppeTone("notice");
-    }
-  }
-}
-
-
-// Заеднички разговор за администраторската и колегијалната верзија.
-
-let chatUnsubscribe = null;
-function escapeChatHTML(value){
-  return String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
-}
-function chatEnterSend(event){
-  if(event.key==="Enter" && !event.shiftKey){
-    event.preventDefault();
-    sendChatMessage();
-  }
-}
-function chatDate(value){
-  try{
-    const d=value && typeof value.toDate==="function" ? value.toDate() : new Date(value || Date.now());
-    return d.toLocaleString("mk-MK",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
-  }catch(e){return "";}
-}
-function renderChatMessages(snapshot){
-  const box=document.getElementById("chatMessages");
-  if(!box)return;
-  const docs=snapshot.docs || [];
-  if(!docs.length){
-    box.innerHTML='<div class="chat-empty">Сè уште нема пораки. Започни разговор.</div>';
-    return;
-  }
-  box.innerHTML=docs.map(doc=>{
-    const m=doc.data()||{};
-    return `<div class="chat-message">
-      <div class="chat-meta"><span class="chat-sender">${escapeChatHTML(m.name||"Пожарникар")}</span><span class="chat-time">${escapeChatHTML(chatDate(m.createdAt||m.clientTs))}</span></div>
-      <div class="chat-body">${escapeChatHTML(m.text||"")}</div>
-      <button type="button" class="chat-delete" onclick='deleteChatMessage(${JSON.stringify(doc.id)})'>🗑️ Избриши порака</button>
-    </div>`;
-  }).join("");
-  box.scrollTop=box.scrollHeight;
-}
-async function deleteChatMessage(id){
-  if(!id || !confirm("Дали сигурно сакаш да ја избришеш оваа порака?"))return;
-  const status=document.getElementById("chatStatus");
-  try{
-    await db.collection("chatMessages").doc(id).delete();
-    if(status){status.textContent="Пораката е избришана кај сите корисници.";status.style.color="#4ade80";}
-  }catch(err){
-    if(status){status.textContent="Неуспешно бришење: "+(err.message||"проверете ги Firebase правилата.");status.style.color="#f87171";}
-  }
-}
-function initLiveChat(){
-  const nameInput=document.getElementById("chatName");
-  const status=document.getElementById("chatStatus");
-  if(!nameInput || !status || chatUnsubscribe)return;
-  nameInput.value=localStorage.getItem("tppeChatDisplayName")||"";
-  chatUnsubscribe=db.collection("chatMessages").orderBy("createdAt","asc").limitToLast(60).onSnapshot(
-    renderChatMessages,
-    err=>{
-      status.textContent="Чатот не е достапен: "+(err.message||"проверете ги Firebase правилата.");
-      status.style.color="#f87171";
-    }
-  );
-  status.textContent="● Поврзано – пораките се ажурираат во живо";
-  status.style.color="#4ade80";
-}
-async function sendChatMessage(){
-  const nameInput=document.getElementById("chatName");
-  const textInput=document.getElementById("chatText");
-  const status=document.getElementById("chatStatus");
-  const name=(nameInput?.value||"").trim();
-  const text=(textInput?.value||"").trim();
-  if(!name){alert("Внеси го твоето име и презиме.");nameInput?.focus();return;}
-  if(!text){textInput?.focus();return;}
-  if(name.length>60 || text.length>1000)return;
-  localStorage.setItem("tppeChatDisplayName",name);
-  try{
-    await db.collection("chatMessages").add({
-      name,
-      text,
-      createdAt:firebase.firestore.FieldValue.serverTimestamp(),
-      clientTs:Date.now()
-    });
-    textInput.value="";
-    status.textContent="Пораката е испратена.";
-    status.style.color="#4ade80";
-  }catch(err){
-    status.textContent="Неуспешно испраќање: "+(err.message||"проверете ја интернет-врската и Firebase правилата.");
-    status.style.color="#f87171";
-  }
-}
-
 
 
 const SHIELD_COLORS = {1:"#f87171",2:"#fbbf24",3:"#60a5fa",4:"#4ade80"};
@@ -497,61 +309,25 @@ function getSlot(date,hour){
 }
 function names(n){
   return (teams[n]||[]).map(name=>{
-    const tel=phones[name];
-    return tel?`<a href="tel:${tel.replace(/\s+/g,'')}" title="Повикај преку стандардната телефонска апликација" style="color:inherit;text-decoration:underline">${name}</a>`:name;
+    const tel=(phones[name]||"").replace(/\s+/g,"");
+    if(tel){
+      return `<a href="tel:${tel}" class="name-call" title="Повикај">${name}</a>`;
+    }
+    return `<span class="name-nocall" title="Нема број">${name}</span>`;
   }).join(" • ");
-}
-function applyAlarmState(data, playSound=true){
-  const wasActive=!!(alarm && alarm.active);
-  alarm=data||{active:false};
-  const active=!!alarm.active;
-  if(active && playSound && !sessionStorage.getItem("tppeAlarmSounded")){
-    sessionStorage.setItem("tppeAlarmSounded","1");
-    tppeTone("alarm");
-  }
-  if(!active)sessionStorage.removeItem("tppeAlarmSounded");
-  try{localStorage.setItem("tppeAlarmCache",JSON.stringify(alarm));}catch(e){}
-  updateAlarmUI();
 }
 function updateAlarmUI(){
   const banner=document.getElementById("alarmBanner");
   const header=document.getElementById("mainHeader");
   const btn=document.getElementById("alarmBtn");
-  const active=!!(alarm && alarm.active);
-  if(banner)banner.classList.toggle("show",active);
-  if(header)header.classList.toggle("alarm-on",active);
-  if(btn){
-    btn.classList.toggle("active",active);
-    btn.textContent=active?"🛑 ИСКЛУЧИ АЛАРМ — интервенција активна":"🚨 АЛАРМ — вклучи интервенција";
-  }
-}
-
-// Алармот се запишува одделно од администраторските поставки и не бара PIN.
-// Истата промена се појавува во двете верзии преку Firestore listener.
-async function toggleAlarm(){
-  const btn=document.getElementById("alarmBtn");
-  const status=document.getElementById("syncStatus");
-  if(btn)btn.disabled=true;
-  try{
-    const ref=db.collection("alarmState").doc("current");
-    await db.runTransaction(async transaction=>{
-      const snap=await transaction.get(ref);
-      const current=snap.exists?(snap.data()||{active:false}):{active:false};
-      const next={
-        active:!current.active,
-        startedAt:Date.now(),
-        changedBy:(localStorage.getItem("tppeChatDisplayName")||"Корисник")
-      };
-      transaction.set(ref,next);
-      alarm=next;
-    });
-    applyAlarmState(alarm,true);
-    if(status){status.textContent="● Алармот е синхронизиран";status.style.color="#4ade80";}
-  }catch(err){
-    if(status){status.textContent="Грешка при промена на алармот: "+(err.message||"проверете ги Firebase правилата.");status.style.color="#f87171";}
-    alert("Алармот не можеше да се промени. Проверете ги Firebase Firestore Rules за alarmState/current.\n"+(err.message||""));
-  }finally{
-    if(btn)btn.disabled=false;
+  if(alarm && alarm.active){
+    banner.classList.add("show");
+    header.classList.add("alarm-on");
+    if(btn){btn.classList.add("active");btn.textContent="🛑 ИСКЛУЧИ АЛАРМ — интервенција активна";}
+  } else {
+    banner.classList.remove("show");
+    header.classList.remove("alarm-on");
+    if(btn){btn.classList.remove("active");btn.textContent="🚨 АЛАРМ — вклучи интервенција";}
   }
 }
 function updateCurrentDuty(){
@@ -646,7 +422,7 @@ function renderServiceList(){
     const clean=(num||"").replace(/\s+/g,"");
     return `<li class="phone-item"><div style="display:flex;align-items:flex-start">
       <span class="phone-num-badge">${i+1}</span>
-      <div><span class="phone-name">${name}</span><span class="phone-number">${clean?`<a href="tel:${clean}" title="Отвори ја стандардната телефонска апликација">${num}</a>`:"—"}</span></div></div>
+      <div><span class="phone-name">${name}</span><span class="phone-number">${num||"—"}</span></div></div>
       ${clean?`<div class="phone-actions"><a class="btn-call" href="tel:${clean}">📞</a><a class="btn-sms" href="sms:${clean}">💬</a></div>`:""}</li>`;
   }).join("")||'<p class="note">Нема службени броеви.</p>';
 }
@@ -658,7 +434,7 @@ function renderPhoneList(filter=""){
     const clean=(num||"").replace(/\s+/g,"");
     return `<li class="phone-item"><div style="display:flex;align-items:flex-start">
       <span class="phone-num-badge">${i+1}</span>
-      <div><span class="phone-name">${name}</span><span class="phone-number">${clean?`<a href="tel:${clean}" title="Отвори ја стандардната телефонска апликација">${num}</a>`:"—"}</span></div></div>
+      <div><span class="phone-name">${name}</span><span class="phone-number">${num||"—"}</span></div></div>
       ${clean?`<div class="phone-actions"><a class="btn-call" href="tel:${clean}">📞</a><a class="btn-sms" href="sms:${clean}">💬</a></div>`:""}</li>`;
   }).join("")||'<p class="note">Нема внесени броеви.</p>';
 }
@@ -719,14 +495,14 @@ function drawCalendar(){
 function chooseDay(v){document.getElementById("date").value=v;render(window.IS_ADMIN);window.scrollTo(0,0)}
 function applyData(data){
   if(!data) return;
-  checkIncomingAlerts(data);
   if(data.teams) teams=data.teams;
   if(data.phones) phones=data.phones;
   if(data.servicePhones) servicePhones=data.servicePhones;
   if(data.notices) notices=data.notices;
   if(data.gallery) gallery=data.gallery;
+  if(data.alarm) alarm=data.alarm; else alarm={active:false};
   if(data.adminPin){ setAdminPin(data.adminPin); }
-  try{localStorage.setItem("tppeCache",JSON.stringify({teams,phones,servicePhones,notices,gallery}))}catch(e){}
+  try{localStorage.setItem("tppeCache",JSON.stringify({teams,phones,servicePhones,notices,gallery,alarm}))}catch(e){}
   render(window.IS_ADMIN);
   updateCurrentDuty();
 }
@@ -752,7 +528,38 @@ function requirePin(){
   if(!unlocked){document.getElementById("pinGate").style.display="flex";return false;}
   return true;
 }
-function payload(){return {teams,phones,servicePhones,notices,gallery,adminPin:getAdminPin(),updatedAt:Date.now()};}
+function changeAdminPassword(){
+  if(!requirePin()) return;
+  const cur = (document.getElementById("pinCurrent")||{}).value || "";
+  const n1 = (document.getElementById("pinNew")||{}).value || "";
+  const n2 = (document.getElementById("pinNew2")||{}).value || "";
+  const msg = document.getElementById("pinChangeMsg");
+  if(cur !== getAdminPin()){
+    if(msg){msg.style.color="#f87171";msg.textContent="Погрешна тековна лозинка.";}
+    return;
+  }
+  if(n1.length < 4){
+    if(msg){msg.style.color="#f87171";msg.textContent="Новата лозинка мора да има барем 4 знаци.";}
+    return;
+  }
+  if(n1 !== n2){
+    if(msg){msg.style.color="#f87171";msg.textContent="Новите лозинки не се совпаѓаат.";}
+    return;
+  }
+  setAdminPin(n1);
+  // persist to cloud with other data
+  const payloadData = payload();
+  payloadData.adminPin = n1;
+  db.collection("appdata").doc("main").set(payloadData)
+    .then(()=>{
+      if(msg){msg.style.color="#4ade80";msg.textContent="Лозинката е успешно променета.";}
+      ["pinCurrent","pinNew","pinNew2"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+    })
+    .catch(err=>{
+      if(msg){msg.style.color="#f87171";msg.textContent="Грешка: "+err.message;}
+    });
+}
+function payload(){return {teams,phones,servicePhones,notices,gallery,alarm,adminPin:getAdminPin(),updatedAt:Date.now()};}
 function saveToCloud(){
   if(!requirePin()) return;
   document.getElementById("syncStatus").textContent="Се зачувува...";
@@ -767,8 +574,25 @@ function saveToCloud(){
       if(typeof showToast==="function") showToast("Грешка: "+err.message,true); else alert("Грешка: "+err.message);});
 }
 function toggleAlarm(){
+  // Алармот не бара лозинка
   alarm={active:!alarm.active,startedAt:Date.now()};
-  updateAlarmUI();saveToCloud();
+  updateAlarmUI();
+  // зачувај во облак без PIN (директно)
+  const payloadData={teams,phones,servicePhones,notices,gallery,alarm,adminPin:(typeof getAdminPin==="function"?getAdminPin():undefined),updatedAt:Date.now()};
+  document.getElementById("syncStatus").textContent="Се зачувува аларм...";
+  document.getElementById("syncStatus").style.color="#fbbf24";
+  db.collection("appdata").doc("main").set(payloadData)
+    .then(()=>{
+      try{localStorage.setItem("tppeCache",JSON.stringify(payloadData))}catch(e){}
+      document.getElementById("syncStatus").textContent="● Алармот е ажуриран";
+      document.getElementById("syncStatus").style.color="#4ade80";
+      if(typeof showToast==="function") showToast(alarm.active?"🚨 Алармот е ВКЛУЧЕН":"Алармот е исклучен");
+    })
+    .catch(err=>{
+      document.getElementById("syncStatus").textContent="Грешка: "+err.message;
+      document.getElementById("syncStatus").style.color="#f87171";
+      if(typeof showToast==="function") showToast("Грешка: "+err.message,true);
+    });
 }
 function addNotice(){
   if(!requirePin()) return;
@@ -822,26 +646,13 @@ function collectEditorData(){
 }
 function saveLocalThenCloud(){collectEditorData();render(true);updateCurrentDuty();saveToCloud();}
 
-try{
-  const cached=JSON.parse(localStorage.getItem("tppeCache")||"null");
-  if(cached)applyData(cached);
-  const cachedAlarm=JSON.parse(localStorage.getItem("tppeAlarmCache")||"null");
-  if(cachedAlarm)applyAlarmState(cachedAlarm,false);
-}catch(e){}
-initLiveChat();
+try{const cached=JSON.parse(localStorage.getItem("tppeCache")||"null");if(cached)applyData(cached);}catch(e){}
 db.collection("appdata").doc("main").onSnapshot(
   (snap)=>{
     if(snap.exists){applyData(snap.data());document.getElementById("syncStatus").textContent="● Синхронизирано";document.getElementById("syncStatus").style.color="#4ade80";}
     else document.getElementById("syncStatus").textContent="Нема податоци од админ уште";
   },
   (err)=>{document.getElementById("syncStatus").textContent="Офлајн / грешка";document.getElementById("syncStatus").style.color="#fbbf24";}
-);
-db.collection("alarmState").doc("current").onSnapshot(
-  snap=>applyAlarmState(snap.exists?snap.data():{active:false},true),
-  err=>{
-    const status=document.getElementById("syncStatus");
-    if(status){status.textContent="Алармот не може да се синхронизира: "+(err.message||"");status.style.color="#f87171";}
-  }
 );
 function hideSplash(){const s=document.getElementById("splash");if(s){s.classList.add("hide");setTimeout(()=>s.remove(),500)}}
 window.addEventListener("load",()=>setTimeout(hideSplash,800));
