@@ -1,6 +1,6 @@
 {
-  "name": "ТППЕ Струмица – Админ",
-  "short_name": "ТППЕ Админ",
+  "name": "ТППЕ Струмица",
+  "short_name": "ТППЕ Струмица",
   "description": "Распоред на смени – ТППЕ Струмица",
   "start_url": "./index.html",
   "display": "standalone",
