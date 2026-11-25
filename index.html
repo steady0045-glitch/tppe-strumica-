@@ -62,7 +62,7 @@ tr[data-date]{cursor:pointer}
 .note{color:#94a3b8;font-size:.8rem;margin-top:10px}
 .phone-list{list-style:none;padding:0;margin:0;counter-reset:phone}
 .phone-item{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid #334155;gap:10px}
-.service-list .phone-item{background:#1a2332;border-radius:10px;padding:12px;margin-bottom:8px;border:1px solid #334155}
+.service-list{display:grid;grid-template-columns:repeat(2,minmax(140px,1fr));gap:10px}.service-list .phone-item{background:#1a2332;border-radius:10px;padding:12px 10px;margin:0;border:1px solid #334155;min-width:0;gap:8px;align-items:center}.service-list .phone-item>div:first-child{min-width:0;flex:1}.service-list .phone-num-badge{width:24px;min-width:24px;height:24px;font-size:.72rem;margin-right:8px}.service-list .phone-name{font-size:.9rem;line-height:1.35;display:block;overflow-wrap:normal;word-break:normal;hyphens:none;white-space:normal}.service-list .phone-number{font-size:.84rem;margin-top:3px;letter-spacing:.02em}.service-list .phone-actions{gap:5px;flex-shrink:0}.service-list .btn-call,.service-list .btn-sms{width:34px;height:34px;font-size:.9rem}
 .phone-num-badge{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;border-radius:50%;background:#334155;color:#e2e8f0;font-size:.8rem;font-weight:700;margin-right:10px;flex-shrink:0}
 .phone-name{font-weight:600}
 .phone-number{font-size:.82rem;color:#94a3b8;display:block;margin-top:2px}
@@ -79,7 +79,7 @@ tr[data-date]{cursor:pointer}
 .notice-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .notice-actions button{flex:0 0 auto;min-height:36px;padding:8px 12px;font-size:.85rem}
 a{color:#60a5fa}
-#splash{position:fixed;inset:0;z-index:99999;background:#020617;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s ease,visibility .5s ease;overflow:hidden}
+#splash{position:fixed;inset:0;z-index:99999;background:#020617;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .25s ease,visibility .25s ease;overflow:hidden}
 #splash.hide{opacity:0;visibility:hidden;pointer-events:none}
 #splash .splash-stars{position:absolute;inset:0;pointer-events:none;background:
   radial-gradient(1px 1px at 12% 18%,#fff,transparent),
@@ -97,20 +97,14 @@ a{color:#60a5fa}
   opacity:.85;animation:twinkle 3s ease-in-out infinite alternate}
 @keyframes twinkle{from{opacity:.55}to{opacity:.95}}
 .splash-flip{width:min(300px,62vw);aspect-ratio:760/1104;max-height:54vh;margin-bottom:20px;perspective:1100px;position:relative;z-index:2}
-.splash-flip-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;animation:logoFlip 3.4s ease-in-out .25s forwards}
+.splash-flip-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;animation:logoFlip 1.65s ease-in-out .1s forwards}
 .splash-flip-front,.splash-flip-back{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:16px;display:flex;align-items:center;justify-content:center;overflow:hidden;box-sizing:border-box}
 .splash-flip-front,.splash-flip-back{background:radial-gradient(ellipse at center,#7f1d1d 0%,#450a0a 70%,#1c1917 100%);border:2px solid #fbbf24;box-shadow:0 0 28px rgba(251,191,36,.35)}
 .splash-flip-front img{width:100%;height:100%;object-fit:contain;display:block}
 .splash-flip-back{transform:rotateY(180deg);flex-direction:column;gap:10px}
 .splash-welcome{font-family:Inter,'Segoe UI',Roboto,Arial,sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(1rem,4.8vw,1.35rem);color:#fde68a;text-shadow:0 0 12px rgba(251,191,36,.4);line-height:1.1}
 .splash-year{font-size:clamp(4rem,20vw,6.5rem);font-weight:900;color:#fbbf24;letter-spacing:.06em;text-shadow:0 0 26px rgba(251,191,36,.6);font-variant-numeric:tabular-nums}
-@keyframes logoFlip{
-  0%{transform:rotateY(0deg) scale(.92)}
-  15%{transform:rotateY(0deg) scale(1)}
-  45%{transform:rotateY(180deg) scale(1)}
-  70%{transform:rotateY(180deg) scale(1)}
-  100%{transform:rotateY(360deg) scale(1)}
-}
+@keyframes logoFlip{0%{transform:rotateY(0deg) scale(.92)}22%{transform:rotateY(0deg) scale(1)}58%,100%{transform:rotateY(180deg) scale(1)}}
 #splash .splash-title{font-size:1.35rem;font-weight:800;letter-spacing:.04em;color:#f8fafc;margin:0 0 4px;text-align:center;position:relative;z-index:2}
 #splash .splash-sub{font-size:.85rem;color:#94a3b8;margin:0 0 22px;text-align:center;position:relative;z-index:2}
 .loader{width:36px;height:36px;border:3px solid #334155;border-top-color:#fbbf24;border-radius:50%;animation:spin .8s linear infinite;position:relative;z-index:2}
@@ -126,6 +120,9 @@ box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:90%;text-align:center}
 #syncStatus{font-size:.75rem;color:#94a3b8;text-align:center;margin-bottom:8px}
 #alarmBanner{display:none;background:linear-gradient(90deg,#7f1d1d,#dc2626,#7f1d1d);background-size:200% 100%;animation:alarmMove 1.2s linear infinite;color:#fff;text-align:center;padding:14px;font-weight:800;font-size:1rem;border-radius:12px;margin-bottom:14px;border:2px solid #fca5a5}
 #alarmBanner.show{display:block}
+#alarmBanner .alarm-banner-title{font-size:1.05rem;margin-bottom:6px}
+#alarmBanner .alarm-banner-detail{font-size:.9rem;font-weight:700;line-height:1.35;margin-top:3px}
+#alarmBanner .alarm-banner-detail strong{color:#fee2e2}
 @keyframes alarmMove{0%{background-position:0% 50%}100%{background-position:200% 50%}}
 header.alarm-on{background:radial-gradient(ellipse at center bottom,#431407 0%,#0f172a 70%)}
 header.alarm-on::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse 80% 50% at 20% 100%,rgba(239,68,68,.35),transparent 60%),radial-gradient(ellipse 70% 45% at 80% 100%,rgba(249,115,22,.3),transparent 55%),radial-gradient(ellipse 50% 40% at 50% 100%,rgba(251,191,36,.2),transparent 50%);animation:smoke 3s ease-in-out infinite alternate}
@@ -261,6 +258,10 @@ header#mainHeader .welcome,header#mainHeader .sub{text-align:center}
  header .header-weather{font-size:.62rem}
  header .clock-date{font-size:.58rem}
  /* emblem size via .emblem-flip */
+}
+@media(max-width:420px){
+ .service-list{grid-template-columns:1fr;gap:8px}
+ .service-list .phone-name{font-size:.92rem}
 }
 
 
@@ -415,7 +416,7 @@ header .emblem-face.back .year-193{
   <div class="welcome" aria-label="Еден тим - Една мисија"><span class="w1">Еден тим</span><span class="w2">Една мисија</span></div>
 </header>
 <div id="syncStatus">Се поврзува...</div>
-<div id="alarmBanner">🚨 АКТИВНА ИНТЕРВЕНЦИЈА — службата е на терен</div>
+<div id="alarmBanner"><div class="alarm-banner-title">🚨 ИНТЕРВЕНЦИЈА ВО ТЕК</div><div class="alarm-banner-detail" id="alarmLocationLine">Место: <span id="alarmLocationText"></span></div><div class="alarm-banner-detail" id="alarmDetailsLine">Што гори / опис: <span id="alarmDetailsText"></span></div></div>
 <div class="panel" id="currentDuty">
   <h2>🔴 Во моментов <span class="now-badge">LIVE</span></h2>
   <div id="currentContent">Се вчитува...</div>
@@ -486,8 +487,12 @@ header .emblem-face.back .year-193{
 </div>
 <div class="panel">
   <h2>🚨 Аларм / интервенција</h2>
+  <label for="alarmLocationInput" style="display:block;margin:8px 0 5px;font-weight:700">Место на интервенција</label>
+  <input id="alarmLocationInput" type="text" maxlength="80" placeholder="Пр. с. Вељуса, ул. Маршал Тито">
+  <label for="alarmDetailsInput" style="display:block;margin:10px 0 5px;font-weight:700">Што гори / краток опис</label>
+  <input id="alarmDetailsInput" type="text" maxlength="120" placeholder="Пр. пожар на куќа / запалена сува трева">
   <button id="alarmBtn" class="red full" onclick="toggleAlarm()">🚨 АЛАРМ — вклучи интервенција</button>
-  <p class="note">Кога е вклучен, кај сите што ја отвориле апликацијата се гледа црвен банер и ефект на амблемот.</p>
+  <p class="note">При вклучување, местото и краткиот опис ќе се прикажат во црвениот аларм кај сите корисници.</p>
 </div>
 <div class="panel admin-panel">
   <button type="button" class="admin-gear" id="adminGear" onclick="toggleAdminTools()" aria-label="Поставки / уредување" title="Поставки">⚙️</button>
@@ -701,7 +706,7 @@ let phones = {};
 let servicePhones = JSON.parse(JSON.stringify(DEFAULT_SERVICE));
 let notices = [];
 let gallery = [];
-let alarm = { active: false };
+let alarm = { active: false, location: "", details: "" };
 const cycle = [1,3,4,1,2,4,3,2];
 const anchor = new Date(2026,9,30,7);
 let monthDate = new Date();
@@ -725,7 +730,11 @@ function updateAlarmUI(){
   const banner=document.getElementById("alarmBanner");
   const header=document.getElementById("mainHeader");
   const btn=document.getElementById("alarmBtn");
+  const locationText=document.getElementById("alarmLocationText");
+  const detailsText=document.getElementById("alarmDetailsText");
   if(alarm && alarm.active){
+    if(locationText) locationText.textContent=(alarm.location||"").trim()||"Не е наведено";
+    if(detailsText) detailsText.textContent=(alarm.details||"").trim()||"Не е наведен опис";
     banner.classList.add("show");
     header.classList.add("alarm-on");
     if(btn){btn.classList.add("active");btn.textContent="🛑 ИСКЛУЧИ АЛАРМ — интервенција активна";}
@@ -922,7 +931,7 @@ function applyData(data){
   if(data.servicePhones) servicePhones=data.servicePhones;
   if(data.notices) notices=data.notices;
   if(data.gallery) gallery=data.gallery;
-  if(data.alarm) alarm=data.alarm; else alarm={active:false};
+  if(data.alarm) alarm=data.alarm; else alarm={active:false,location:"",details:""};
   if(data.adminPin){ setAdminPin(data.adminPin); }
   try{localStorage.setItem("tppeCache",JSON.stringify({teams,absences,phones,servicePhones,notices,gallery,alarm}))}catch(e){}
   render(window.IS_ADMIN);
@@ -967,8 +976,22 @@ function saveToCloud(){
       if(typeof showToast==="function") showToast("Грешка: "+err.message,true); else alert("Грешка: "+err.message);});
 }
 function toggleAlarm(){
-  alarm={active:!alarm.active,startedAt:Date.now()};
-  updateAlarmUI();saveToCloud();
+  if(!requirePin()) return;
+  if(alarm && alarm.active){
+    alarm={active:false,location:"",details:"",startedAt:Date.now()};
+    const loc=document.getElementById("alarmLocationInput");
+    const desc=document.getElementById("alarmDetailsInput");
+    if(loc) loc.value="";
+    if(desc) desc.value="";
+  } else {
+    const location=(document.getElementById("alarmLocationInput").value||"").trim();
+    const details=(document.getElementById("alarmDetailsInput").value||"").trim();
+    if(!location){alert("Внеси место на интервенцијата.");document.getElementById("alarmLocationInput").focus();return;}
+    if(!details){alert("Внеси краток опис на интервенцијата.");document.getElementById("alarmDetailsInput").focus();return;}
+    alarm={active:true,location,details,startedAt:Date.now()};
+  }
+  updateAlarmUI();
+  saveToCloud();
 }
 function addNotice(){
   if(!requirePin()) return;
@@ -1046,8 +1069,8 @@ db.collection("appdata").doc("main").onSnapshot(
   (err)=>{document.getElementById("syncStatus").textContent="Офлајн / грешка";document.getElementById("syncStatus").style.color="#fbbf24";}
 );
 function hideSplash(){const s=document.getElementById("splash");if(s){s.classList.add("hide");setTimeout(()=>s.remove(),500)}}
-window.addEventListener("load",()=>setTimeout(hideSplash,4100));
-setTimeout(hideSplash,5500);
+window.addEventListener("load",()=>setTimeout(hideSplash,1900),{once:true});
+setTimeout(hideSplash,2400);
 function updateOnlineStatus(){const b=document.getElementById("offlineBanner");if(navigator.onLine)b.classList.remove("show");else b.classList.add("show")}
 window.addEventListener("online",updateOnlineStatus);
 window.addEventListener("offline",updateOnlineStatus);
