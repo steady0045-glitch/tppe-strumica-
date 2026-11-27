@@ -45,8 +45,17 @@
 
   <main class="grid">
     <section class="card" id="cardDuty">
-      <h2>🔴 Во моментов <span class="live">LIVE</span></h2>
+      <h2>🔴 Во моментов <span class="live">LIVE</span><span id="fieldCountBadge" style="float:right;display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;padding:0 8px;border-radius:50%;background:#dc2626;color:#fff;font-size:.9rem;font-weight:800" title="Пожарникари на терен">0</span></h2>
       <div class="body" id="dutyBody"></div>
+    </section>
+
+    <section class="card" id="alarmCard">
+      <h2>🚨 Аларм / интервенција</h2>
+      <div class="body">
+        <input id="alarmLocIn" type="text" maxlength="80" placeholder="Место на интервенција">
+        <input id="alarmDetIn" type="text" maxlength="120" placeholder="Што гори / краток опис">
+        <button id="alarmBtn" type="button" class="alarm-btn">🚨 АЛАРМ — вклучи интервенција</button>
+      </div>
     </section>
 
     <section class="card" id="cardNotices">
@@ -98,12 +107,6 @@
           <h3>📢 Ново соопштение</h3>
           <textarea id="noticeText" rows="3" placeholder="Внеси информација за огласната табла..."></textarea>
           <button id="noticeBtn" type="button" class="primary">➕ Објави на огласна табла</button>
-        </div>
-        <div>
-          <h3>🚨 Аларм / интервенција</h3>
-          <input id="alarmLocIn" type="text" maxlength="80" placeholder="Место на интервенција">
-          <input id="alarmDetIn" type="text" maxlength="120" placeholder="Што гори / краток опис">
-          <button id="alarmBtn" type="button" class="alarm-btn">🚨 АЛАРМ — вклучи интервенција</button>
         </div>
       </div>
     </section>
