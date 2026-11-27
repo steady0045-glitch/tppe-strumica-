@@ -76,6 +76,7 @@ body.admin #adminCard{display:block}
 .shift-head{display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem}
 .shift-role{font-weight:800;font-size:1rem}
 .shift-num{color:var(--muted);font-size:.85rem;margin-left:auto}
+.shift-head .shift-count{margin-left:.35rem}
 .badge{display:inline-grid;place-items:center;width:1.7rem;height:1.7rem;border-radius:.45rem;font-weight:800;color:#111}
 .t1>.shift-head .badge,.sel-line.t1 .badge{background:var(--t1)} .t2>.shift-head .badge,.sel-line.t2 .badge{background:var(--t2)}
 .t3>.shift-head .badge,.sel-line.t3 .badge{background:var(--t3)} .t4>.shift-head .badge,.sel-line.t4 .badge{background:var(--t4)}
@@ -86,8 +87,15 @@ body.admin #adminCard{display:block}
 .shift.t2 .chip-name{color:#fcd34d}
 .shift.t3 .chip-name{color:#93c5fd}
 .shift.t4 .chip-name{color:#86efac}
-.chip-name.on-field{color:#fff!important;font-weight:800;text-shadow:0 0 7px rgba(255,255,255,.4)}
+.chip-name.on-field{font-weight:800;animation:field-blink 1s ease-in-out infinite}
+.chip-name.called{color:#fff!important;font-weight:800;text-shadow:0 0 7px rgba(255,255,255,.4)}
+@keyframes field-blink{0%,100%{opacity:1}50%{opacity:.25}}
 .field-status-hint{font-size:.72rem;color:var(--muted);margin:-.2rem 0 .55rem}
+.shift-count{margin-left:auto;background:rgba(15,23,42,.75);border:1px solid var(--line);border-radius:99px;padding:.1rem .55rem;font-size:.78rem;font-weight:800;color:#e2e8f0}
+.shift-head{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap}
+.duty-report-actions,.report-actions{display:flex;flex-wrap:wrap;gap:.5rem;margin:.4rem 0 .7rem}
+.duty-report-box,.report-box{background:rgba(15,23,42,.7);border:1px solid var(--line);border-radius:.7rem;padding:.75rem .9rem;margin-top:.4rem;white-space:pre-wrap;font-size:.86rem;line-height:1.45;max-height:360px;overflow:auto}
+.duty-report-box[hidden],.report-box[hidden]{display:none!important}
 .chip.absent{opacity:.8;text-decoration:line-through;text-decoration-color:rgba(255,255,255,.4)}
 .chip .chip-btn{background:#334155;border-radius:99px;padding:.1rem .55rem;min-height:0;font-size:.7rem;font-weight:600;text-decoration:none}
 .absent-row{margin-top:.55rem;padding-top:.5rem;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
