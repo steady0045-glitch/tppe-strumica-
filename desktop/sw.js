@@ -1,6 +1,6 @@
 // Service worker САМО за /desktop/. Има свој кеш и ги брише само кешовите со префикс "tppe-desktop-",
 // за никогаш да не го допре кешот на мобилната апликација ("tppe-strumica-v..").
-const CACHE = 'tppe-desktop-v2';
+const CACHE = 'tppe-desktop-v3';
 const ASSETS = ['./', './index.html', './manifest.json', './css/dashboard.css',
   './js/firebase-init.js', './js/schedule.js', './js/sound.js', './js/data-store.js',
   './js/widgets.js', './js/admin.js', './js/tv-mode.js', './js/main.js',

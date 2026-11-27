@@ -45,8 +45,23 @@
 
   <main class="grid">
     <section class="card" id="cardDuty">
-      <h2>🔴 Во моментов <span class="live">LIVE</span><span id="fieldCountBadge" style="float:right;display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;padding:0 8px;border-radius:50%;background:#dc2626;color:#fff;font-size:.9rem;font-weight:800" title="Пожарникари на терен">0</span></h2>
+      <h2>🔴 Во моментов <span class="live">LIVE</span><span style="float:right;display:inline-flex;align-items:center;gap:6px"><span id="calledCountBadge" style="display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;padding:0 8px;border-radius:50%;background:#1e3a8a;color:#fff;font-size:.9rem;font-weight:800" title="Повикани од приправност">0</span><span id="fieldCountBadge" style="display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;padding:0 8px;border-radius:50%;background:#dc2626;color:#fff;font-size:.9rem;font-weight:800" title="Пожарникари на терен">0</span></span></h2>
       <div class="body" id="dutyBody"></div>
+    </section>
+
+    <section class="card" id="cardReport">
+      <h2 id="reportToggle" role="button" tabindex="0" style="cursor:pointer;justify-content:space-between;user-select:none"><span>📋 Извештај за дежурство 🔐</span><span class="chevron" id="reportChevron">▼</span></h2>
+      <div class="body">
+        <p class="muted" id="reportHint" style="margin:0">Кликни за да се отвори / затвори (бара админ лозинка).</p>
+        <div id="reportPanel" hidden>
+          <p class="muted" style="margin:0 0 .6rem">Писмен преглед на состојбата на тековното дежурство (смени, отсутни, на терен, повикани, аларм, соопштенија).</p>
+          <pre id="reportBox" class="report-box"></pre>
+          <div id="reportActions" class="report-actions">
+            <button id="reportCopyBtn" type="button">📋 Копирај текст</button>
+            <button id="reportCloseBtn" type="button">✖ Затвори</button>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section class="card" id="alarmCard">
@@ -122,7 +137,7 @@
     <input id="pinInput" type="password" maxlength="40" autocomplete="off" placeholder="••••">
     <p id="pinError" class="err-text" hidden>Погрешна лозинка</p>
     <div class="dlg-actions">
-      <button type="button" id="pinCancel">Откажи</button>
+      <button type="button" id="pinCancel">↩ Назад</button>
       <button type="submit" class="primary">Влез</button>
     </div>
   </form>
