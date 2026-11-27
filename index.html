@@ -419,7 +419,7 @@ header .emblem-face.back .year-193{
 <div id="syncStatus">Се поврзува...</div>
 <div id="alarmBanner"><div class="alarm-banner-title">🚨 ИНТЕРВЕНЦИЈА ВО ТЕК</div><div class="alarm-banner-detail" id="alarmLocationLine">Место: <span id="alarmLocationText"></span></div><div class="alarm-banner-detail" id="alarmDetailsLine">Што гори / опис: <span id="alarmDetailsText"></span></div></div>
 <div class="panel" id="currentDuty">
-  <h2>🔴 Во моментов <span class="now-badge">LIVE</span></h2>
+  <h2>🔴 Во моментов <span class="now-badge">LIVE</span><span id="fieldCountBadge" style="float:right;display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;padding:0 8px;border-radius:50%;background:#dc2626;color:#fff;font-size:.9rem;font-weight:800" title="Пожарникари на терен">0</span></h2>
   <div id="currentContent">Се вчитува...</div>
   <div class="live-time" id="liveClock"></div>
 </div>
@@ -781,6 +781,8 @@ function updateAlarmUI(){
   }
 }
 function updateCurrentDuty(){
+  const fieldCount=Object.values(fieldStatuses||{}).filter(Boolean).length;
+  const countBadge=document.getElementById("fieldCountBadge");if(countBadge)countBadge.textContent=String(fieldCount);
   const now=new Date();
   const hour=now.getHours();
   const isDay=hour>=7&&hour<19;
@@ -999,8 +1001,8 @@ function requirePin(){
   return true;
 }
 function payload(){return {teams,absences,phones,servicePhones,notices,gallery,alarm,adminPin:getAdminPin(),updatedAt:Date.now()};}
-function saveToCloud(){
-  if(!requirePin()) return;
+function saveToCloud(skipPin=false){
+  if(!skipPin && !requirePin()) return;
   document.getElementById("syncStatus").textContent="Се зачувува...";
   document.getElementById("syncStatus").style.color="#fbbf24";
   db.collection("appdata").doc("main").set(payload())
@@ -1013,7 +1015,6 @@ function saveToCloud(){
       if(typeof showToast==="function") showToast("Грешка: "+err.message,true); else alert("Грешка: "+err.message);});
 }
 function toggleAlarm(){
-  if(!requirePin()) return;
   if(alarm && alarm.active){
     alarm={active:false,location:"",details:"",startedAt:Date.now()};
     const loc=document.getElementById("alarmLocationInput");
@@ -1028,7 +1029,7 @@ function toggleAlarm(){
     alarm={active:true,location,details,startedAt:Date.now()};
   }
   updateAlarmUI();
-  saveToCloud();
+  saveToCloud(true);
 }
 function addNotice(){
   if(!requirePin()) return;
