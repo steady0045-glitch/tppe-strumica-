@@ -46,6 +46,14 @@ input[type=date],input[type=text],input[type=tel],input[type=password],textarea{
 .field-status-name.called a{color:#fff!important}
 @keyframes field-blink{0%,100%{opacity:1}50%{opacity:.25}}
 .field-status-hint{font-size:.72rem;color:#94a3b8;margin-top:5px}
+#alarmMap{width:100%;height:260px;border:1px solid #64748b;border-radius:12px;margin-top:12px;background:#0f172a}
+.fleet-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.fleet-vehicle{display:flex;align-items:center;gap:12px;background:#26364d;border:1px solid #475569;border-radius:12px;padding:14px;min-height:68px;cursor:pointer;user-select:none;touch-action:manipulation}
+.fleet-vehicle .vehicle-icon{font-size:1.7rem}
+.fleet-vehicle .vehicle-name{font-weight:800;line-height:1.3}
+.fleet-vehicle .vehicle-state{display:block;color:#94a3b8;font-size:.75rem;margin-top:3px}
+.fleet-vehicle.on-field{border:2px solid #ef4444;animation:field-blink 1s ease-in-out infinite;background:#7f1d1d}
+.fleet-empty{color:#94a3b8;text-align:center;padding:14px;border:1px dashed #475569;border-radius:10px}
 .shift-count{display:inline-block;margin-left:8px;vertical-align:middle;background:rgba(15,23,42,.75);border:1px solid #334155;border-radius:99px;padding:.12rem .55rem;font-size:.75rem;font-weight:800;color:#e2e8f0}
 .report-box{white-space:pre-wrap;background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px;font-size:.88rem;line-height:1.45;color:#e2e8f0;max-height:420px;overflow:auto}
 .report-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
@@ -390,6 +398,17 @@ header .emblem-face.back .year-193{
   header .emblem-flip{width:70px;height:70px}
 }
 </style>
+<style>
+.daily-report-form{display:grid;gap:7px;margin:12px 0;padding:12px;border:1px solid var(--border,#334155);border-radius:12px;background:rgba(148,163,184,.06)}
+.daily-report-form input,.daily-report-form textarea{width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--border,#475569);border-radius:8px;background:var(--input-bg,#0f172a);color:inherit;font:inherit}
+.daily-report-form h3,.daily-interventions-wrap h3{margin:8px 0 4px;font-size:1rem}
+.daily-interventions-wrap{margin:12px 0}
+.daily-intervention{padding:10px;margin:8px 0;border:1px solid var(--border,#475569);border-radius:10px;background:rgba(148,163,184,.05)}
+.daily-intervention strong{display:block;margin-bottom:4px}
+.daily-intervention .di-meta{font-size:.9em;opacity:.9;margin:3px 0}
+.daily-intervention button{margin-top:7px}
+.daily-report-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+</style>
 </head>
 <body>
 <script>document.body.classList.add((new Date().getHours()>=7&&new Date().getHours()<19)?"shift-day":"shift-night");</script>
@@ -425,27 +444,19 @@ header .emblem-face.back .year-193{
   <div class="welcome" aria-label="Еден тим - Една мисија"><span class="w1">Еден тим</span><span class="w2">Една мисија</span></div>
 </header>
 <div id="syncStatus">Се поврзува...</div>
-<div id="alarmBanner"><div class="alarm-banner-title">🚨 ИНТЕРВЕНЦИЈА ВО ТЕК</div><div class="alarm-banner-detail" id="alarmLocationLine">Место: <span id="alarmLocationText"></span></div><div class="alarm-banner-detail" id="alarmDetailsLine">Што гори / опис: <span id="alarmDetailsText"></span></div></div>
+<div id="alarmBanner"><div class="alarm-banner-title">🚨 ИНТЕРВЕНЦИЈА ВО ТЕК</div><div class="alarm-banner-detail" id="alarmLocationLine">Место: <span id="alarmLocationText"></span></div><div class="alarm-banner-detail" id="alarmDetailsLine">Што гори / опис: <span id="alarmDetailsText"></span></div><iframe id="alarmMap" title="Мапа на интервенцијата" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe><div class="note" style="color:#fecaca;margin-top:6px">📍 Локација на интервенцијата · <a id="alarmMapLink" href="#" target="_blank" rel="noopener" style="color:#fff;text-decoration:underline">Отвори во Google Maps</a></div></div>
 <div class="panel" id="currentDuty">
   <h2>🔴 Во моментов <span class="now-badge">LIVE</span><span style="float:right;display:inline-flex;align-items:center;gap:6px"><span id="calledCountBadge" style="display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;padding:0 8px;border-radius:50%;background:#1e3a8a;color:#fff;font-size:.9rem;font-weight:800" title="Повикани од приправност">0</span><span id="fieldCountBadge" style="display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;padding:0 8px;border-radius:50%;background:#dc2626;color:#fff;font-size:.9rem;font-weight:800" title="Пожарникари на терен">0</span></span></h2>
   <div id="currentContent">Се вчитува...</div>
   <div class="live-time" id="liveClock"></div>
 </div>
-<div class="panel" id="dutyReportPanel">
-  <h2 class="teams-toggle" id="dutyReportToggle" onclick="toggleDutyReport()" style="cursor:pointer">
-    <span>📋 Извештај за дежурство 🔐</span>
-    <span class="chevron">▼</span>
-  </h2>
-  <div id="dutyReportBody" style="display:none">
-    <p class="note">Генерира писмен преглед на состојбата на тековното дежурство (смени, отсутни, на терен, повикани, аларм, соопштенија).</p>
-    <div id="dutyReportBox" class="report-box" style="display:none;margin-top:10px"></div>
-    <div class="report-actions" id="dutyReportActions" style="display:none">
-      <button class="blue" type="button" onclick="copyDutyReport()">📋 Копирај текст</button>
-      <button class="secondary" type="button" onclick="closeDutyReport()">✖ Затвори</button>
-    </div>
-  </div>
-  <p class="note" id="dutyReportHint">Кликни на насловот за да се отвори / затвори (бара админ лозинка).</p>
+
+<div class="panel" id="fleetPanel">
+  <h2>🚒 Возен парк</h2>
+  <div id="fleetList" class="fleet-list"><div class="fleet-empty">Сè уште нема внесени возила.</div></div>
+  <p class="note">Двоен клик или двоен допир на возило за означување дека е на терен. Повтори за враќање.</p>
 </div>
+
 <div class="panel"><h2>📢 Огласна табла</h2><div id="noticeBoard"></div></div>
 
 <div class="panel" id="liveChatPanel">
@@ -491,6 +502,7 @@ header .emblem-face.back .year-193{
   <div class="search-box"><input type="text" id="phoneSearch" placeholder="Пребарај..." oninput="filterPhones()"></div>
   <ul class="phone-list" id="phoneList"></ul>
 </div>
+
 <div class="panel">
   <h2 class="teams-toggle" id="teamsToggle" onclick="toggleTeams()">
     <span><svg class="helmet-icon" viewBox="0 0 32 32" width="28" height="28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -522,12 +534,15 @@ header .emblem-face.back .year-193{
   <button type="button" class="admin-gear" id="adminGear" onclick="toggleAdminTools()" aria-label="Поставки / уредување" title="Поставки">⚙️</button>
   <div id="adminTools" style="display:none">
   <div class="actions">
-    <button class="secondary" onclick="toggleEditor()">Уреди состав / броеви</button>
+    <button class="secondary" onclick="toggleEditor()">Уреди состав / возен парк / броеви</button>
     <button class="green" onclick="saveToCloud()">☁ Зачувај во облак</button>
   </div>
   <div class="editor" id="editor">
     <h3 style="margin-top:16px;color:#fbbf24">Состав на смени</h3>
     <div id="editFields"></div>
+    <h3 style="margin-top:20px;color:#fbbf24">🚒 Возен парк</h3>
+    <label for="vehicleEdit" class="note">Внеси по едно возило во секој ред (назив / регистарски број).</label>
+    <textarea id="vehicleEdit" rows="5" placeholder="Пр. ТППЕ 1 – цистерна\nТППЕ 2 – навално возило"></textarea>
     <h3 style="margin-top:20px;color:#fbbf24">Телефонски броеви (вработени)</h3>
     <div id="phoneEditFields"></div>
     <button class="secondary full" onclick="addPhoneRow()" style="margin-top:8px">+ Додај контакт</button>
@@ -549,6 +564,29 @@ header .emblem-face.back .year-193{
     <button class="secondary full" type="button" onclick="closePinGate()" style="margin-top:8px">↩ Назад во апликацијата</button>
     <p class="note" id="pinError" style="color:#f87171;text-align:center;display:none">Погрешна лозинка</p>
   </div>
+</div>
+<div class="panel" id="dutyReportPanel">
+  <h2 class="teams-toggle" id="dutyReportToggle" onclick="toggleDutyReport()" style="cursor:pointer">
+    <span>📋 Дневен извештај 🔐</span>
+    <span class="chevron">▼</span>
+  </h2>
+  <div id="dutyReportBody" style="display:none">
+    <p class="note">Евиденција на интервенциите и дневната оперативна состојба.</p>
+    <div class="daily-report-form">
+      <label for="dailyReportDate"><b>Датум на извештај</b></label>
+      <input type="date" id="dailyReportDate" onchange="changeDailyReportDate()">
+      <p class="note">Интервенциите и сите промени се евидентираат автоматски од алармот, статусите на пожарникарите и возилата.</p>
+    <div class="daily-interventions-wrap">
+      <h3>Интервенции за денот: <span id="dailyInterventionCount">0</span></h3>
+      <div id="dailyInterventionsList" class="report-box">Се вчитува евиденцијата...</div>
+    </div>
+    <div class="daily-report-actions">
+      <button class="blue" type="button" onclick="generateDutyReport()">📄 Генерирај дневен извештај</button>
+      <button class="secondary" type="button" onclick="copyDutyReport()">📋 Копирај извештај</button>
+    </div>
+    <div id="dutyReportBox" class="report-box" style="display:none;margin-top:10px"></div>
+  </div>
+  <p class="note" id="dutyReportHint">Кликни на насловот за да се отвори / затвори (бара админ лозинка).</p>
 </div>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -735,6 +773,10 @@ let phones = {};
 let servicePhones = JSON.parse(JSON.stringify(DEFAULT_SERVICE));
 let notices = [];
 let gallery = [];
+let vehicles = [];
+let vehicleStatuses = {};
+let vehicleTapTimers = {};
+let vehicleStatusLocalTs = 0;
 let alarm = { active: false, location: "", details: "" };
 const cycle = [1,3,4,1,2,4,3,2];
 const anchor = new Date(2026,9,30,7);
@@ -838,6 +880,7 @@ function saveFieldStatusTransaction(name,kind,active){
     return updatedAt;
   }).then(ts=>{
     if(ts&&ts>fieldStatusesLocalTs) fieldStatusesLocalTs=ts;
+    db.collection("dailyActivityEvents").add({date:(alarm&&alarm.active?localISODate(new Date(alarm.startedAt||Date.now())):localISODate()),kind:kind,name,active:!!active,interventionId:(alarm&&alarm.active?alarm.interventionId:null),ts:Date.now()}).catch(err=>console.warn("Daily field history:",err));
   }).catch(err=>{
     if(typeof showToast==='function') showToast('Неуспешна синхронизација на статусите. Проверете интернет.',true);
     console.warn('Field status write:',err);
@@ -850,17 +893,39 @@ function updateAlarmUI(){
   const btn=document.getElementById("alarmBtn");
   const locationText=document.getElementById("alarmLocationText");
   const detailsText=document.getElementById("alarmDetailsText");
+  const map=document.getElementById("alarmMap");
+  const mapLink=document.getElementById("alarmMapLink");
   if(alarm && alarm.active){
     if(locationText) locationText.textContent=(alarm.location||"").trim()||"Не е наведено";
     if(detailsText) detailsText.textContent=(alarm.details||"").trim()||"Не е наведен опис";
     banner.classList.add("show");
     header.classList.add("alarm-on");
+    if(map){const query=encodeURIComponent((alarm.location||"")+", Strumica, North Macedonia");const src="https://maps.google.com/maps?q="+query+"&output=embed";if(map.dataset.query!==query){map.src=src;map.dataset.query=query;}if(mapLink)mapLink.href="https://www.google.com/maps/search/?api=1&query="+query;}
     if(btn){btn.classList.add("active");btn.textContent="🛑 ИСКЛУЧИ АЛАРМ — интервенција активна";}
   } else {
     banner.classList.remove("show");
     header.classList.remove("alarm-on");
+    if(map){map.removeAttribute("src");map.dataset.query="";}if(mapLink)mapLink.href="#";
     if(btn){btn.classList.remove("active");btn.textContent="🚨 АЛАРМ — вклучи интервенција";}
   }
+}
+function renderFleet(){
+  const host=document.getElementById("fleetList");if(!host)return;
+  if(!vehicles.length){host.innerHTML='<div class="fleet-empty">Нема внесени возила. Администратор може да ги додаде во ⚙️ Уреди состав / возен парк / броеви.</div>';return;}
+  host.innerHTML=vehicles.map((name,i)=>{const active=!!vehicleStatuses[name];const safe=JSON.stringify(name).replace(/</g,'\\u003c');return `<div class="fleet-vehicle ${active?'on-field':''}" role="button" tabindex="0" data-vehicle="${escapeHTML(name)}" onclick='vehicleTap(event,${safe})' onkeydown='if(event.key==="Enter"||event.key===" "){event.preventDefault();vehicleTap(event,${safe})}'><span class="vehicle-icon">🚒</span><span><span class="vehicle-name">${escapeHTML(name)}</span><span class="vehicle-state">${active?'🔴 НА ТЕРЕН':'Подготвено / во база'}</span></span></div>`;}).join("");
+}
+function vehicleTap(event,name){
+  if(event){event.preventDefault();event.stopPropagation();}
+  if(vehicleTapTimers[name]){clearTimeout(vehicleTapTimers[name]);delete vehicleTapTimers[name];toggleVehicleStatus(name);return;}
+  vehicleTapTimers[name]=setTimeout(()=>{delete vehicleTapTimers[name];},360);
+}
+function toggleVehicleStatus(name){
+  const next=!vehicleStatuses[name];if(next)vehicleStatuses[name]=true;else delete vehicleStatuses[name];
+  vehicleStatusLocalTs=Date.now();renderFleet();
+  db.collection("dailyActivityEvents").add({date:(alarm&&alarm.active?localISODate(new Date(alarm.startedAt||Date.now())):localISODate()),kind:"vehicle",name,active:!!next,interventionId:(alarm&&alarm.active?alarm.interventionId:null),ts:Date.now()}).catch(err=>console.warn("Daily vehicle history:",err));
+  try{localStorage.setItem('tppeVehicleStatuses',JSON.stringify({statuses:vehicleStatuses,updatedAt:vehicleStatusLocalTs}));}catch(e){}
+  const ref=db.collection('appdata').doc('vehicleStatuses');
+  db.runTransaction(async t=>{const snap=await t.get(ref);const data=snap.exists?(snap.data()||{}):{};const statuses=data.statuses||{};if(next)statuses[name]=true;else delete statuses[name];t.set(ref,{statuses,updatedAt:Date.now()});}).catch(err=>{console.warn('Vehicle status sync:',err);if(typeof showToast==='function')showToast('Неуспешна синхронизација на статусот на возилото.',true);});
 }
 function updateCurrentDuty(){
   const fieldCount=Object.values(fieldStatuses||{}).filter(Boolean).length;
@@ -915,111 +980,6 @@ function updateCurrentDuty(){
     <p class="field-status-hint">Двоен клик/допир: трепка = НА ТЕРЕН · Задржи клик: бело = ПОВИКАН од приправност.</p>
     <p class="note" style="margin-top:10px">Редослед: дежурна → приправна → наредна → слободна. ${untilChange}.</p>`;
   document.getElementById("liveClock").textContent=now.toLocaleString("mk-MK",{weekday:"long",day:"2-digit",month:"long",hour:"2-digit",minute:"2-digit",second:"2-digit"});
-}
-
-function buildDutyReportText(){
-  const now=new Date();
-  const hour=now.getHours();
-  const isDay=hour>=7&&hour<19;
-  let slotDate=now, slotHour=7;
-  if(!isDay){slotHour=19;if(hour<7)slotDate=new Date(now.getFullYear(),now.getMonth(),now.getDate()-1);}
-  const slot=getSlot(slotDate,slotHour);
-  const periodLabel=isDay?"Дневна смена (07:00–19:00)":"Ноќна смена (19:00–07:00)";
-  const when=now.toLocaleString("mk-MK",{weekday:"long",year:"numeric",month:"long",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"});
-  const roleRows=[["Дежурна",slot.duty],["Приправна",slot.standby],["Наредна",slot.next],["Слободна",slot.free]];
-  let lines=[];
-  lines.push("ТППЕ СТРУМИЦА — ИЗВЕШТАЈ ЗА ДЕЖУРСТВО");
-  lines.push("====================================");
-  lines.push("Генериран: "+when);
-  lines.push("Период: "+periodLabel);
-  lines.push("");
-  lines.push("1. СОСТАВ НА СМЕНИТЕ");
-  roleRows.forEach(([label,n])=>{
-    const all=teams[n]||[];
-    const gone=new Set(absences[n]||[]);
-    const present=all.filter(x=>!gone.has(x));
-    const absent=all.filter(x=>gone.has(x));
-    lines.push("");
-    lines.push(label+" — Смена "+n+" ("+present.length+"/"+all.length+" присутни)");
-    lines.push("  Присутни: "+(present.join(", ")||"—"));
-    if(absent.length) lines.push("  Отсутни: "+absent.join(", "));
-  });
-  const onField=Object.keys(fieldStatuses||{}).filter(k=>fieldStatuses[k]);
-  const called=Object.keys(calledStatuses||{}).filter(k=>calledStatuses[k]);
-  lines.push("");
-  lines.push("2. НА ТЕРЕН ("+onField.length+")");
-  lines.push(onField.length?("  "+onField.join(", ")):"  Нема означени.");
-  lines.push("");
-  lines.push("3. ПОВИКАНИ ОД ПРИПРАВНОСТ ("+called.length+")");
-  lines.push(called.length?("  "+called.join(", ")):"  Нема означени.");
-  lines.push("");
-  lines.push("4. АЛАРМ / ИНТЕРВЕНЦИЈА");
-  if(alarm&&alarm.active){
-    lines.push("  Статус: АКТИВЕН");
-    lines.push("  Место: "+((alarm.location||"").trim()||"Не е наведено"));
-    lines.push("  Опис: "+((alarm.details||"").trim()||"Не е наведен"));
-    if(alarm.startedAt){
-      try{lines.push("  Започнат: "+new Date(alarm.startedAt).toLocaleString("mk-MK"));}catch(e){}
-    }
-  } else {
-    lines.push("  Статус: Нема активна интервенција.");
-  }
-  lines.push("");
-  lines.push("5. СООПШТЕНИЈА");
-  const sorted=[...(notices||[])].sort((a,b)=>(b.ts||0)-(a.ts||0));
-  if(!sorted.length) lines.push("  Нема активни соопштенија.");
-  else sorted.slice(0,15).forEach((n,i)=>{
-    lines.push("  ("+(i+1)+") "+(n.date||"")+(n.date?" — ":"")+(n.text||"").replace(/\s+/g," ").trim());
-  });
-  lines.push("");
-  lines.push("— Крај на извештајот —");
-  lines.push("(Состојба во моментот на генерирање)");
-  return lines.join("\n");
-}
-function openDutyReport(){
-  const body=document.getElementById("dutyReportBody"),tg=document.getElementById("dutyReportToggle");
-  if(body) body.style.display="block";
-  if(tg) tg.classList.add("open");
-  const hint=document.getElementById("dutyReportHint"); if(hint) hint.style.display="none";
-  generateDutyReport();
-}
-function closeDutyReport(){
-  const body=document.getElementById("dutyReportBody"),tg=document.getElementById("dutyReportToggle");
-  if(body) body.style.display="none";
-  if(tg) tg.classList.remove("open");
-  const box=document.getElementById("dutyReportBox"),act=document.getElementById("dutyReportActions");
-  if(box){box.style.display="none";box.textContent="";}
-  if(act) act.style.display="none";
-  const hint=document.getElementById("dutyReportHint"); if(hint) hint.style.display="";
-  window._lastDutyReport="";
-}
-function toggleDutyReport(){
-  const body=document.getElementById("dutyReportBody");
-  if(body && body.style.display==="block"){closeDutyReport();return;}
-  if(!requirePin()){window._afterPin=openDutyReport;return;}
-  openDutyReport();
-}
-function generateDutyReport(){
-  const text=buildDutyReportText();
-  const box=document.getElementById("dutyReportBox");
-  const actions=document.getElementById("dutyReportActions");
-  if(box){box.style.display="block";box.textContent=text;}
-  if(actions) actions.style.display="flex";
-  window._lastDutyReport=text;
-  if(typeof showToast==="function") showToast("✓ Извештајот е генериран");
-}
-function copyDutyReport(){
-  const text=window._lastDutyReport||buildDutyReportText();
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(text).then(()=>{if(typeof showToast==="function")showToast("✓ Копирано во clipboard");}).catch(()=>fallbackCopyReport(text));
-  } else fallbackCopyReport(text);
-}
-function fallbackCopyReport(text){
-  const ta=document.createElement("textarea");
-  ta.value=text;ta.style.position="fixed";ta.style.left="-9999px";
-  document.body.appendChild(ta);ta.select();
-  try{document.execCommand("copy");if(typeof showToast==="function")showToast("✓ Копирано");}catch(e){if(typeof showToast==="function")showToast("Не може да се копира автоматски",true);}
-  document.body.removeChild(ta);
 }
 
 function shiftCard(title,s){
@@ -1105,9 +1065,10 @@ function moveAbsence(name,fromTeam,markAbsent,toTeam){
   if(target!==source){showToast("Отсуството означи го во матичната смена.",true);return;}
   for(let n=1;n<=4;n++) absences[n]=(absences[n]||[]).filter(x=>x!==name);
   if(markAbsent) absences[source].push(name);
+  db.collection("dailyActivityEvents").add({date:localISODate(),kind:"absence",name,active:!!markAbsent,team:source,ts:Date.now()}).catch(err=>console.warn("Daily absence history:",err));
   render(window.IS_ADMIN);
   updateCurrentDuty();
-  try{localStorage.setItem("tppeCache",JSON.stringify({teams,absences,phones,servicePhones,notices,gallery,alarm}))}catch(e){}
+  try{localStorage.setItem("tppeCache",JSON.stringify({teams,absences,phones,servicePhones,notices,gallery,vehicles,alarm}))}catch(e){}
   saveAbsencesToCloud();
 }
 let absenceSaveQueue=Promise.resolve();
@@ -1127,7 +1088,7 @@ function render(admin){
   if(res) res.innerHTML="";
   drawCalendar();
   document.getElementById("teams").innerHTML=[1,2,3,4].map(n=>teamAbsenceCard(n)).join("");
-  renderPhoneList();renderServiceList();renderNotices(!!admin);updateAlarmUI();
+  renderPhoneList();renderServiceList();renderNotices(!!admin);renderFleet();updateAlarmUI();
 }
 function move(n){
   const el=document.getElementById("date"),[y,m,d]=el.value.split("-").map(Number);
@@ -1165,9 +1126,10 @@ function applyData(data){
   if(data.servicePhones) servicePhones=data.servicePhones;
   if(data.notices) notices=data.notices;
   if(data.gallery) gallery=data.gallery;
+  if(Array.isArray(data.vehicles)) vehicles=data.vehicles;
   if(data.alarm) alarm=data.alarm; else alarm={active:false,location:"",details:""};
   if(data.adminPin){ setAdminPin(data.adminPin); }
-  try{localStorage.setItem("tppeCache",JSON.stringify({teams,absences,phones,servicePhones,notices,gallery,alarm}))}catch(e){}
+  try{localStorage.setItem("tppeCache",JSON.stringify({teams,absences,phones,servicePhones,notices,gallery,vehicles,alarm}))}catch(e){}
   render(window.IS_ADMIN);
   updateCurrentDuty();
 }
@@ -1205,7 +1167,7 @@ function requirePin(){
   if(!unlocked){document.getElementById("pinGate").style.display="flex";setTimeout(()=>{const pi=document.getElementById("pinInput");if(pi)pi.focus();},50);return false;}
   return true;
 }
-function payload(){return {teams,absences,phones,servicePhones,notices,gallery,alarm,adminPin:getAdminPin(),updatedAt:Date.now()};}
+function payload(){return {teams,absences,phones,servicePhones,notices,gallery,vehicles,alarm,adminPin:getAdminPin(),updatedAt:Date.now()};}
 function saveToCloud(skipPin=false){
   if(!skipPin && !requirePin()) return;
   document.getElementById("syncStatus").textContent="Се зачувува...";
@@ -1221,7 +1183,9 @@ function saveToCloud(skipPin=false){
 }
 function toggleAlarm(){
   if(alarm && alarm.active){
-    alarm={active:false,location:"",details:"",startedAt:Date.now()};
+    const endedAt=Date.now();
+    db.collection("dailyActivityEvents").add({date:localISODate(new Date(alarm.startedAt||endedAt)),kind:"alarm_end",interventionId:alarm.interventionId||null,place:alarm.location||"",burning:alarm.details||"",ts:endedAt}).catch(err=>console.warn("Daily alarm end history:",err));
+    alarm={active:false,location:"",details:"",startedAt:endedAt};
     const loc=document.getElementById("alarmLocationInput");
     const desc=document.getElementById("alarmDetailsInput");
     if(loc) loc.value="";
@@ -1231,7 +1195,10 @@ function toggleAlarm(){
     const details=(document.getElementById("alarmDetailsInput").value||"").trim();
     if(!location){alert("Внеси место на интервенцијата.");document.getElementById("alarmLocationInput").focus();return;}
     if(!details){alert("Внеси краток опис на интервенцијата.");document.getElementById("alarmDetailsInput").focus();return;}
-    alarm={active:true,location,details,startedAt:Date.now()};
+    const startedAt=Date.now();
+    const interventionId="int_"+startedAt+"_"+Math.random().toString(36).slice(2,8);
+    alarm={active:true,location,details,startedAt,interventionId};
+    db.collection("dailyActivityEvents").add({date:localISODate(new Date(startedAt)),kind:"alarm_start",interventionId,place:location,burning:details,ts:startedAt}).catch(err=>{console.warn("Daily alarm start history:",err);if(typeof showToast==="function")showToast("Не е зачувана историјата на интервенцијата. Проверете Firebase правила.",true);});
   }
   updateAlarmUI();
   saveToCloud(true);
@@ -1275,6 +1242,7 @@ function buildEditor(){
   document.getElementById("editFields").innerHTML=[1,2,3,4].map(n=>
     `<label>Смена ${n}</label><textarea id="team${n}">${(teams[n]||[]).join("\n")}</textarea>`
   ).join("");
+  const ve=document.getElementById("vehicleEdit");if(ve)ve.value=(vehicles||[]).join("\n");
   const pc=document.getElementById("phoneEditFields");pc.innerHTML="";
   const pe=Object.entries(phones||{});
   if(!pe.length) addPhoneRow(); else pe.forEach(([n,num])=>addPhoneRow(n,num));
@@ -1296,6 +1264,7 @@ function collectEditorData(){
   const updated={};
   for(let n=1;n<=4;n++){const el=document.getElementById("team"+n);if(el) updated[n]=el.value.split(/\n|,/).map(x=>x.trim()).filter(Boolean);}
   if(Object.keys(updated).length) teams=updated;
+  const vehicleInput=document.getElementById("vehicleEdit");if(vehicleInput)vehicles=vehicleInput.value.split(/\n|,/).map(x=>x.trim()).filter(Boolean);
   const np={};document.querySelectorAll("#phoneEditFields .phone-edit-row").forEach(row=>{const i=row.querySelectorAll("input");if(i[0].value.trim()) np[i[0].value.trim()]=i[1].value.trim();});
   phones=np;
   const ns={};document.querySelectorAll("#serviceEditFields .phone-edit-row").forEach(row=>{const i=row.querySelectorAll("input");if(i[0].value.trim()) ns[i[0].value.trim()]=i[1].value.trim();});
@@ -1333,6 +1302,8 @@ db.collection('appdata').doc('fieldStatuses').onSnapshot(snap=>{
   try{localStorage.setItem('tppeFieldStatuses',JSON.stringify({statuses:fieldStatuses,called:calledStatuses,updatedAt:fieldStatusesLocalTs}));}catch(e){}
   render(window.IS_ADMIN);updateCurrentDuty();
 },err=>console.warn('Field status sync:',err));
+try{const cachedVehicles=JSON.parse(localStorage.getItem('tppeVehicleStatuses')||'{}');vehicleStatuses=cachedVehicles.statuses||{};vehicleStatusLocalTs=cachedVehicles.updatedAt||0;}catch(e){vehicleStatuses={};}
+db.collection('appdata').doc('vehicleStatuses').onSnapshot(snap=>{const data=snap.exists?(snap.data()||{}):{};const ts=data.updatedAt||0;if(ts&&ts<vehicleStatusLocalTs)return;vehicleStatuses=data.statuses||{};if(ts)vehicleStatusLocalTs=ts;try{localStorage.setItem('tppeVehicleStatuses',JSON.stringify({statuses:vehicleStatuses,updatedAt:vehicleStatusLocalTs}));}catch(e){}renderFleet();},err=>console.warn('Vehicle status listener:',err));
 function hideSplash(){const s=document.getElementById("splash");if(s){s.classList.add("hide");setTimeout(()=>s.remove(),500)}}
 window.addEventListener("load",()=>setTimeout(hideSplash,1900),{once:true});
 setTimeout(hideSplash,2400);
@@ -1379,5 +1350,117 @@ if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.se
 })();
 </script>
 
+<script>
+// Дневна евиденција на интервенции – синхронизирана преку Firebase.
+let dailyInterventions=[];
+let dailyActivityEvents=[];
+let dailyInterventionsUnsub=null;
+let dailyActivityUnsub=null;
+let dailyReportDateValue="";
+function localISODate(d=new Date()){
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function escapeDaily(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function initDailyReportEntries(){
+  const dateEl=document.getElementById("dailyReportDate");
+  if(!dateEl)return;
+  if(!dateEl.value)dateEl.value=localISODate();
+  dailyReportDateValue=dateEl.value;
+  subscribeDailyInterventions();
+}
+function changeDailyReportDate(){
+  const el=document.getElementById("dailyReportDate");
+  dailyReportDateValue=el?.value||localISODate();
+  subscribeDailyInterventions();
+  const box=document.getElementById("dutyReportBox");if(box){box.style.display="none";box.textContent="";}
+}
+function subscribeDailyInterventions(){
+  if(dailyInterventionsUnsub){dailyInterventionsUnsub();dailyInterventionsUnsub=null;}
+  const host=document.getElementById("dailyInterventionsList");if(host)host.textContent="Се вчитува евиденцијата...";
+  if(!dailyReportDateValue)return;
+  dailyInterventionsUnsub=db.collection("dailyInterventions").where("date","==",dailyReportDateValue).onSnapshot(snap=>{
+    dailyInterventions=snap.docs.map(doc=>({id:doc.id,...(doc.data()||{})})).sort((a,b)=>(a.createdAtMs||0)-(b.createdAtMs||0));
+    renderDailyInterventions();
+  },err=>{if(host)host.textContent="Евиденцијата не може да се вчита. Проверете интернет и Firebase правила.";console.warn("Daily interventions:",err);});
+  if(dailyActivityUnsub){dailyActivityUnsub();dailyActivityUnsub=null;}
+  dailyActivityUnsub=db.collection("dailyActivityEvents").where("date","==",dailyReportDateValue).onSnapshot(snap=>{
+    dailyActivityEvents=snap.docs.map(doc=>doc.data()||{});renderDailyInterventions();
+  },err=>console.warn("Daily activity history:",err));
+}
+function renderDailyInterventions(){
+  const host=document.getElementById("dailyInterventionsList"),count=document.getElementById("dailyInterventionCount");
+  const starts=(dailyActivityEvents||[]).filter(e=>e.kind==="alarm_start").sort((a,b)=>(a.ts||0)-(b.ts||0));
+  if(count)count.textContent=String(starts.length);
+  if(!host)return;
+  if(!starts.length){host.innerHTML='<div class="note">Нема регистрирани интервенции за избраниот ден. Секое вклучување на алармот автоматски создава запис.</div>';return;}
+  host.innerHTML=starts.map((it,i)=>{
+    const related=dailyActivityEvents.filter(e=>e.interventionId===it.interventionId).sort((a,b)=>(a.ts||0)-(b.ts||0));
+    const ended=related.find(e=>e.kind==="alarm_end");
+    const people={field:new Set(),called:new Set(),vehicle:new Set()};
+    related.forEach(e=>{const k=e.kind;if(people[k]){if(e.active)people[k].add(e.name);else people[k].delete(e.name);}});
+    const names=(k)=>[...people[k]].join(", ")||"—";
+    return `<div class="daily-intervention"><strong>${i+1}. ${escapeDaily(it.place||"Место не е наведено")}</strong><div class="di-meta"><b>Што горело / настан:</b> ${escapeDaily(it.burning||"Не е наведено")}</div><div class="di-meta">Почеток: ${new Date(it.ts).toLocaleTimeString("mk-MK",{hour:"2-digit",minute:"2-digit"})}${ended?" · Крај: "+new Date(ended.ts).toLocaleTimeString("mk-MK",{hour:"2-digit",minute:"2-digit"}):" · Во тек"}</div><div class="di-meta"><b>На терен:</b> ${escapeDaily(names("field"))}</div><div class="di-meta"><b>Повикани:</b> ${escapeDaily(names("called"))}</div><div class="di-meta"><b>Возила:</b> ${escapeDaily(names("vehicle"))}</div></div>`;
+  }).join("");
+}
+function buildDutyReportText(){
+  const date=dailyReportDateValue||localISODate();
+  const [yy,mm,dd]=date.split("-").map(Number);
+  const dateLabel=new Date(yy,mm-1,dd).toLocaleDateString("mk-MK",{weekday:"long",year:"numeric",month:"long",day:"2-digit"});
+  const events=(dailyActivityEvents||[]).slice().sort((a,b)=>(a.ts||0)-(b.ts||0));
+  const starts=events.filter(e=>e.kind==="alarm_start");
+  const latest=(kind)=>{const state={};events.filter(e=>e.kind===kind).forEach(e=>{state[e.name]=!!e.active;});return Object.keys(state).filter(n=>state[n]);};
+  const absent=latest("absence");
+  const lines=["ТППЕ СТРУМИЦА — ДНЕВЕН ИЗВЕШТАЈ","Датум: "+dateLabel,"Генериран: "+new Date().toLocaleString("mk-MK"),"","ВКУПНО ИНТЕРВЕНЦИИ: "+starts.length];
+  if(!starts.length)lines.push("Нема регистрирани интервенции.");
+  starts.forEach((it,i)=>{
+    const rel=events.filter(e=>e.interventionId===it.interventionId);
+    const ended=rel.find(e=>e.kind==="alarm_end");
+    const state=(kind)=>{const map={};rel.filter(e=>e.kind===kind).forEach(e=>map[e.name]=!!e.active);return Object.keys(map).filter(n=>map[n]);};
+    lines.push("",(i+1)+". ИНТЕРВЕНЦИЈА", "   Место: "+(it.place||"—"),"   Што горело / настан: "+(it.burning||"—"),"   Почеток: "+new Date(it.ts).toLocaleTimeString("mk-MK"));
+    if(ended)lines.push("   Завршена: "+new Date(ended.ts).toLocaleTimeString("mk-MK"));else lines.push("   Статус: ВО ТЕК");
+    lines.push("   Пожарникари на терен: "+(state("field").join(", ")||"—"),"   Повикани пожарникари: "+(state("called").join(", ")||"—"),"   Возила на терен: "+(state("vehicle").join(", ")||"—"));
+  });
+  lines.push("","ОТСУТНИ ПОЖАРНИКАРИ",absent.join(", ")||"Нема евидентирани отсутни.");
+  const unlinked=events.filter(e=>!e.interventionId&&["field","called","vehicle"].includes(e.kind));
+  if(unlinked.length){lines.push("","ПРОМЕНИ НАДВОР ОД АКТИВНА ИНТЕРВЕНЦИЈА");unlinked.forEach(e=>lines.push("   "+new Date(e.ts).toLocaleTimeString("mk-MK")+" — "+e.name+" — "+e.kind+" — "+(e.active?"активно":"исклучено")));}
+  lines.push("","Напомена: извештајот ги содржи промените регистрирани во апликацијата до моментот на генерирање.","— Крај на дневниот извештај —");
+  return lines.join("\n");
+}
+function openDutyReport(){
+  const body=document.getElementById("dutyReportBody"),tg=document.getElementById("dutyReportToggle");
+  if(body)body.style.display="block";if(tg)tg.classList.add("open");
+  const hint=document.getElementById("dutyReportHint");if(hint)hint.style.display="none";
+  if(!dailyReportDateValue)initDailyReportEntries();
+}
+function closeDutyReport(){
+  const body=document.getElementById("dutyReportBody"),tg=document.getElementById("dutyReportToggle");
+  if(body)body.style.display="none";if(tg)tg.classList.remove("open");
+  const box=document.getElementById("dutyReportBox");if(box){box.style.display="none";box.textContent="";}
+  const hint=document.getElementById("dutyReportHint");if(hint)hint.style.display="";
+  window._lastDutyReport="";
+}
+function toggleDutyReport(){
+  const body=document.getElementById("dutyReportBody");
+  if(body&&body.style.display==="block"){closeDutyReport();return;}
+  if(!requirePin()){window._afterPin=openDutyReport;return;}
+  openDutyReport();
+}
+function generateDutyReport(){
+  const text=buildDutyReportText(),box=document.getElementById("dutyReportBox");
+  if(box){box.style.display="block";box.textContent=text;}
+  window._lastDutyReport=text;
+  if(typeof showToast==="function")showToast("✓ Дневниот извештај е генериран");
+}
+function copyDutyReport(){
+  const text=window._lastDutyReport||buildDutyReportText();
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(()=>showToast("✓ Копирано во clipboard")).catch(()=>fallbackCopyReport(text));
+  else fallbackCopyReport(text);
+}
+function fallbackCopyReport(text){
+  const ta=document.createElement("textarea");ta.value=text;ta.style.position="fixed";ta.style.left="-9999px";document.body.appendChild(ta);ta.select();
+  try{document.execCommand("copy");showToast("✓ Копирано");}catch(e){showToast("Не може да се копира автоматски",true);}document.body.removeChild(ta);
+}
+document.addEventListener("DOMContentLoaded",initDailyReportEntries);
+</script>
 </body>
 </html>
