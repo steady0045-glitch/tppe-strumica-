@@ -46,6 +46,9 @@ input[type=date],input[type=text],input[type=tel],input[type=password],textarea{
 .field-status-name.called a{color:#fff!important}
 @keyframes field-blink{0%,100%{opacity:1}50%{opacity:.25}}
 .field-status-hint{font-size:.72rem;color:#94a3b8;margin-top:5px}
+.shift-count{display:inline-block;margin-left:8px;vertical-align:middle;background:rgba(15,23,42,.75);border:1px solid #334155;border-radius:99px;padding:.12rem .55rem;font-size:.75rem;font-weight:800;color:#e2e8f0}
+.report-box{white-space:pre-wrap;background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px;font-size:.88rem;line-height:1.45;color:#e2e8f0;max-height:420px;overflow:auto}
+.report-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .shield{display:inline-flex;width:22px;height:22px;vertical-align:middle;flex-shrink:0}
 .shield svg{width:22px;height:22px;display:block}
 #currentDuty{background:linear-gradient(135deg,#1e3a5f,#1e293b);border:1px solid #3b82f6;position:relative;overflow:hidden}
@@ -428,6 +431,21 @@ header .emblem-face.back .year-193{
   <div id="currentContent">Се вчитува...</div>
   <div class="live-time" id="liveClock"></div>
 </div>
+<div class="panel" id="dutyReportPanel">
+  <h2 class="teams-toggle" id="dutyReportToggle" onclick="toggleDutyReport()" style="cursor:pointer">
+    <span>📋 Извештај за дежурство 🔐</span>
+    <span class="chevron">▼</span>
+  </h2>
+  <div id="dutyReportBody" style="display:none">
+    <p class="note">Генерира писмен преглед на состојбата на тековното дежурство (смени, отсутни, на терен, повикани, аларм, соопштенија).</p>
+    <div id="dutyReportBox" class="report-box" style="display:none;margin-top:10px"></div>
+    <div class="report-actions" id="dutyReportActions" style="display:none">
+      <button class="blue" type="button" onclick="copyDutyReport()">📋 Копирај текст</button>
+      <button class="secondary" type="button" onclick="closeDutyReport()">✖ Затвори</button>
+    </div>
+  </div>
+  <p class="note" id="dutyReportHint">Кликни на насловот за да се отвори / затвори (бара админ лозинка).</p>
+</div>
 <div class="panel"><h2>📢 Огласна табла</h2><div id="noticeBoard"></div></div>
 
 <div class="panel" id="liveChatPanel">
@@ -522,12 +540,13 @@ header .emblem-face.back .year-193{
   </div>
   </div>
 </div>
-<div id="pinGate">
+<div id="pinGate" onclick="if(event.target===this)closePinGate()">
   <div class="panel">
     <h2 style="text-align:center">🔐 Админ пристап</h2>
     <p class="note" style="text-align:center">Внесете ја админ лозинката</p>
-    <input type="password" id="pinInput" placeholder="••••" maxlength="20">
+    <input type="password" id="pinInput" placeholder="••••" maxlength="20" onkeydown="if(event.key==='Enter')checkPin()">
     <button class="green full" onclick="checkPin()">Влез</button>
+    <button class="secondary full" type="button" onclick="closePinGate()" style="margin-top:8px">↩ Назад во апликацијата</button>
     <p class="note" id="pinError" style="color:#f87171;text-align:center;display:none">Погрешна лозинка</p>
   </div>
 </div>
@@ -867,29 +886,140 @@ function updateCurrentDuty(){
     (19-hour)+"ч до смена на ноќна":
     (hour>=19?(24-hour+7):(7-hour))+"ч до смена на дневна";
 
+  function shiftCountLabel(n){
+    const total=(teams[n]||[]).length;
+    const gone=new Set(absences[n]||[]);
+    const present=(teams[n]||[]).filter(x=>!gone.has(x)).length;
+    return `<span class="shift-count" title="Присутни / вкупно">${present}/${total}</span>`;
+  }
   document.getElementById("currentContent").innerHTML=
     `<div class="shift team-${slot.duty}">
-      <h3>${shield(slot.duty)} Дежурна — Смена ${slot.duty}</h3>
+      <h3>${shield(slot.duty)} Дежурна — Смена ${slot.duty} ${shiftCountLabel(slot.duty)}</h3>
       <p style="margin:6px 0 2px;color:#94a3b8;font-size:.85rem">${periodLabel}</p>
       <div class="names" style="font-size:1rem">${names(slot.duty)}</div>
     </div>
     <div class="shift team-${slot.standby}" style="margin-top:8px">
-      <h3>${shield(slot.standby)} Приправна — Смена ${slot.standby}</h3>
+      <h3>${shield(slot.standby)} Приправна — Смена ${slot.standby} ${shiftCountLabel(slot.standby)}</h3>
       <p style="margin:4px 0;color:#94a3b8;font-size:.85rem">${standbyFor}</p>
       <div class="names">${names(slot.standby)}</div>
     </div>
     <div class="shift team-${slot.next}" style="margin-top:8px">
-      <h3>${shield(slot.next)} Наредна — Смена ${slot.next}</h3>
+      <h3>${shield(slot.next)} Наредна — Смена ${slot.next} ${shiftCountLabel(slot.next)}</h3>
       <p style="margin:4px 0;color:#94a3b8;font-size:.85rem">${nextFor}</p>
       <div class="names">${names(slot.next)}</div>
     </div>
     <div class="shift team-${slot.free}" style="margin-top:8px">
-      <h3>${shield(slot.free)} Слободна — Смена ${slot.free}</h3>
+      <h3>${shield(slot.free)} Слободна — Смена ${slot.free} ${shiftCountLabel(slot.free)}</h3>
       <div class="names">${names(slot.free)}</div>
     </div>
     <p class="field-status-hint">Двоен клик/допир: трепка = НА ТЕРЕН · Задржи клик: бело = ПОВИКАН од приправност.</p>
     <p class="note" style="margin-top:10px">Редослед: дежурна → приправна → наредна → слободна. ${untilChange}.</p>`;
   document.getElementById("liveClock").textContent=now.toLocaleString("mk-MK",{weekday:"long",day:"2-digit",month:"long",hour:"2-digit",minute:"2-digit",second:"2-digit"});
+}
+
+function buildDutyReportText(){
+  const now=new Date();
+  const hour=now.getHours();
+  const isDay=hour>=7&&hour<19;
+  let slotDate=now, slotHour=7;
+  if(!isDay){slotHour=19;if(hour<7)slotDate=new Date(now.getFullYear(),now.getMonth(),now.getDate()-1);}
+  const slot=getSlot(slotDate,slotHour);
+  const periodLabel=isDay?"Дневна смена (07:00–19:00)":"Ноќна смена (19:00–07:00)";
+  const when=now.toLocaleString("mk-MK",{weekday:"long",year:"numeric",month:"long",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  const roleRows=[["Дежурна",slot.duty],["Приправна",slot.standby],["Наредна",slot.next],["Слободна",slot.free]];
+  let lines=[];
+  lines.push("ТППЕ СТРУМИЦА — ИЗВЕШТАЈ ЗА ДЕЖУРСТВО");
+  lines.push("====================================");
+  lines.push("Генериран: "+when);
+  lines.push("Период: "+periodLabel);
+  lines.push("");
+  lines.push("1. СОСТАВ НА СМЕНИТЕ");
+  roleRows.forEach(([label,n])=>{
+    const all=teams[n]||[];
+    const gone=new Set(absences[n]||[]);
+    const present=all.filter(x=>!gone.has(x));
+    const absent=all.filter(x=>gone.has(x));
+    lines.push("");
+    lines.push(label+" — Смена "+n+" ("+present.length+"/"+all.length+" присутни)");
+    lines.push("  Присутни: "+(present.join(", ")||"—"));
+    if(absent.length) lines.push("  Отсутни: "+absent.join(", "));
+  });
+  const onField=Object.keys(fieldStatuses||{}).filter(k=>fieldStatuses[k]);
+  const called=Object.keys(calledStatuses||{}).filter(k=>calledStatuses[k]);
+  lines.push("");
+  lines.push("2. НА ТЕРЕН ("+onField.length+")");
+  lines.push(onField.length?("  "+onField.join(", ")):"  Нема означени.");
+  lines.push("");
+  lines.push("3. ПОВИКАНИ ОД ПРИПРАВНОСТ ("+called.length+")");
+  lines.push(called.length?("  "+called.join(", ")):"  Нема означени.");
+  lines.push("");
+  lines.push("4. АЛАРМ / ИНТЕРВЕНЦИЈА");
+  if(alarm&&alarm.active){
+    lines.push("  Статус: АКТИВЕН");
+    lines.push("  Место: "+((alarm.location||"").trim()||"Не е наведено"));
+    lines.push("  Опис: "+((alarm.details||"").trim()||"Не е наведен"));
+    if(alarm.startedAt){
+      try{lines.push("  Започнат: "+new Date(alarm.startedAt).toLocaleString("mk-MK"));}catch(e){}
+    }
+  } else {
+    lines.push("  Статус: Нема активна интервенција.");
+  }
+  lines.push("");
+  lines.push("5. СООПШТЕНИЈА");
+  const sorted=[...(notices||[])].sort((a,b)=>(b.ts||0)-(a.ts||0));
+  if(!sorted.length) lines.push("  Нема активни соопштенија.");
+  else sorted.slice(0,15).forEach((n,i)=>{
+    lines.push("  ("+(i+1)+") "+(n.date||"")+(n.date?" — ":"")+(n.text||"").replace(/\s+/g," ").trim());
+  });
+  lines.push("");
+  lines.push("— Крај на извештајот —");
+  lines.push("(Состојба во моментот на генерирање)");
+  return lines.join("\n");
+}
+function openDutyReport(){
+  const body=document.getElementById("dutyReportBody"),tg=document.getElementById("dutyReportToggle");
+  if(body) body.style.display="block";
+  if(tg) tg.classList.add("open");
+  const hint=document.getElementById("dutyReportHint"); if(hint) hint.style.display="none";
+  generateDutyReport();
+}
+function closeDutyReport(){
+  const body=document.getElementById("dutyReportBody"),tg=document.getElementById("dutyReportToggle");
+  if(body) body.style.display="none";
+  if(tg) tg.classList.remove("open");
+  const box=document.getElementById("dutyReportBox"),act=document.getElementById("dutyReportActions");
+  if(box){box.style.display="none";box.textContent="";}
+  if(act) act.style.display="none";
+  const hint=document.getElementById("dutyReportHint"); if(hint) hint.style.display="";
+  window._lastDutyReport="";
+}
+function toggleDutyReport(){
+  const body=document.getElementById("dutyReportBody");
+  if(body && body.style.display==="block"){closeDutyReport();return;}
+  if(!requirePin()){window._afterPin=openDutyReport;return;}
+  openDutyReport();
+}
+function generateDutyReport(){
+  const text=buildDutyReportText();
+  const box=document.getElementById("dutyReportBox");
+  const actions=document.getElementById("dutyReportActions");
+  if(box){box.style.display="block";box.textContent=text;}
+  if(actions) actions.style.display="flex";
+  window._lastDutyReport=text;
+  if(typeof showToast==="function") showToast("✓ Извештајот е генериран");
+}
+function copyDutyReport(){
+  const text=window._lastDutyReport||buildDutyReportText();
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>{if(typeof showToast==="function")showToast("✓ Копирано во clipboard");}).catch(()=>fallbackCopyReport(text));
+  } else fallbackCopyReport(text);
+}
+function fallbackCopyReport(text){
+  const ta=document.createElement("textarea");
+  ta.value=text;ta.style.position="fixed";ta.style.left="-9999px";
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand("copy");if(typeof showToast==="function")showToast("✓ Копирано");}catch(e){if(typeof showToast==="function")showToast("Не може да се копира автоматски",true);}
+  document.body.removeChild(ta);
 }
 
 function shiftCard(title,s){
@@ -1058,11 +1188,21 @@ function checkPin(){
     document.getElementById("pinGate").style.display="none";
     document.getElementById("pinError").style.display="none";
     document.getElementById("pinInput").value="";
-    if(window._openAdminAfterPin){window._openAdminAfterPin=false;toggleAdminTools();}
+    const cb=window._afterPin;window._afterPin=null;
+    if(typeof cb==="function") cb();
   } else document.getElementById("pinError").style.display="block";
 }
+function closePinGate(){
+  window._afterPin=null;
+  document.getElementById("pinGate").style.display="none";
+  document.getElementById("pinError").style.display="none";
+  document.getElementById("pinInput").value="";
+}
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){const g=document.getElementById("pinGate");if(g&&g.style.display==="flex")closePinGate();}
+});
 function requirePin(){
-  if(!unlocked){document.getElementById("pinGate").style.display="flex";return false;}
+  if(!unlocked){document.getElementById("pinGate").style.display="flex";setTimeout(()=>{const pi=document.getElementById("pinInput");if(pi)pi.focus();},50);return false;}
   return true;
 }
 function payload(){return {teams,absences,phones,servicePhones,notices,gallery,alarm,adminPin:getAdminPin(),updatedAt:Date.now()};}
@@ -1116,10 +1256,11 @@ function toggleAdminTools(){
     box.style.display="none";gear.classList.remove("open");
     document.getElementById("editor").style.display="none";
     unlocked=false;try{sessionStorage.removeItem("tppeAdminOk")}catch(e){}
+    closeDutyReport();
     const pi=document.getElementById("pinInput");if(pi)pi.value="";
     return;
   }
-  if(!requirePin()){window._openAdminAfterPin=true;return;}
+  if(!requirePin()){window._afterPin=toggleAdminTools;return;}
   box.style.display="block";gear.classList.add("open");
   const ed=document.getElementById("editor");
   if(ed.style.display!=="block"){buildEditor();ed.style.display="block";}
