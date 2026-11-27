@@ -111,6 +111,8 @@
     const p = SCH.currentPeriod(now);
     const body = $("dutyBody");
     body.replaceChildren();
+    const fieldCount = Object.values(st.fieldStatuses || {}).filter(Boolean).length;
+    const countBadge = $("fieldCountBadge"); if (countBadge) countBadge.textContent = String(fieldCount);
 
     body.append(h("div", { class: "period" }, [
       h("span", { class: "period-label", text: p.isDay ? "☀️ Дневна смена (07:00–19:00)" : "🌙 Ноќна смена (19:00–07:00)" }),
