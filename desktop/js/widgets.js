@@ -83,17 +83,48 @@
   function chip(name, team, isAbsent) {
     const tel = st.phones[name];
     const onField = !!st.fieldStatuses[name];
+    const isCalled = !!st.calledStatuses[name];
+    let cls = "chip-name";
+    if (onField) cls += " on-field";
+    else if (isCalled) cls += " called";
+    let title = "Двоен клик: На терен (трепка) · Задржи клик: Повикан (бела)";
+    if (onField) title = "На терен — двоен клик за враќање";
+    else if (isCalled) title = "Повикан од приправност — задржи клик за враќање";
     const nameNode = h("span", {
-      class: "chip-name" + (onField ? " on-field" : ""),
+      class: cls,
       text: name,
-      title: onField ? "На терен — двоен клик за враќање" : "Двоен клик за означување: На терен",
-      ondblclick: event => {
-        event.preventDefault();
-        const next = !st.fieldStatuses[name];
-        S.setFieldStatus(name, next)
-          .then(() => toast(next ? "✓ " + name + " е означен/а: НА ТЕРЕН" : "✓ " + name + " е вратен/а во редовен статус"))
+      title: title
+    });
+    // Двоен клик → на терен (трепка)
+    nameNode.addEventListener("dblclick", event => {
+      event.preventDefault();
+      event.stopPropagation();
+      const next = !st.fieldStatuses[name];
+      S.setFieldStatus(name, next)
+        .then(() => toast(next ? "✓ " + name + " е означен/а: НА ТЕРЕН" : "✓ " + name + " е вратен/а во редовен статус"))
+        .catch(fail);
+    });
+    // Задржување на клик (~550 ms) → повикан (бела боја)
+    let holdTimer = null;
+    let holdTriggered = false;
+    const clearHold = () => { if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; } };
+    nameNode.addEventListener("pointerdown", event => {
+      if (event.button !== 0 && event.pointerType !== "touch") return;
+      holdTriggered = false;
+      clearHold();
+      holdTimer = setTimeout(() => {
+        holdTriggered = true;
+        const next = !st.calledStatuses[name];
+        S.setCalledStatus(name, next)
+          .then(() => toast(next ? "✓ " + name + " е означен/а: ПОВИКАН" : "✓ " + name + " е вратен/а од повикани"))
           .catch(fail);
-      }
+      }, 550);
+    });
+    nameNode.addEventListener("pointerup", clearHold);
+    nameNode.addEventListener("pointerleave", clearHold);
+    nameNode.addEventListener("pointercancel", clearHold);
+    nameNode.addEventListener("click", event => {
+      if (holdTriggered) { event.preventDefault(); event.stopPropagation(); holdTriggered = false; }
     });
     const c = h("span", { class: "chip" + (isAbsent ? " absent" : ""), title: tel || "" }, [nameNode]);
     if (!isTv()) {
@@ -112,23 +143,27 @@
     const body = $("dutyBody");
     body.replaceChildren();
     const fieldCount = Object.values(st.fieldStatuses || {}).filter(Boolean).length;
+    const calledCount = Object.values(st.calledStatuses || {}).filter(Boolean).length;
     const countBadge = $("fieldCountBadge"); if (countBadge) countBadge.textContent = String(fieldCount);
+    const calledBadge = $("calledCountBadge"); if (calledBadge) calledBadge.textContent = String(calledCount);
 
     body.append(h("div", { class: "period" }, [
       h("span", { class: "period-label", text: p.isDay ? "☀️ Дневна смена (07:00–19:00)" : "🌙 Ноќна смена (19:00–07:00)" }),
       h("span", { class: "period-count" }, [document.createTextNode("до промена: "), h("b", { id: "countdown", text: "--:--:--" })])
     ]));
-    body.append(h("div", { class: "field-status-hint", text: "Двоен клик на име: бело = НА ТЕРЕН · повторен двоен клик = редовен статус" }));
+    body.append(h("div", { class: "field-status-hint", text: "Двоен клик: трепка = НА ТЕРЕН · Задржи клик: бело = ПОВИКАН од приправност" }));
 
     ROLES.forEach(([key, label], i) => {
       const n = p.slot[key];
       const gone = st.absences[n] || [];
       const here = present(n);
+      const total = (st.teams[n] || []).length;
       const card = h("div", { class: "shift t" + n + (i === 0 ? " primary" : "") }, [
         h("div", { class: "shift-head" }, [
           h("span", { class: "badge", text: n }),
           h("span", { class: "shift-role", text: label }),
-          h("span", { class: "shift-num", text: "Смена " + n })
+          h("span", { class: "shift-num", text: "Смена " + n }),
+          h("span", { class: "shift-count", text: here.length + "/" + total, title: "Присутни / вкупно во смената" })
         ]),
         h("div", { class: "chips" }, here.length ? here.map(x => chip(x, n, false)) : [h("span", { class: "muted", text: "Нема присутни членови" })])
       ]);
@@ -284,8 +319,101 @@
     renderDuty(); renderNotices(); renderCalendar(); renderPhones(); renderAlarm(); renderSync(); renderChat();
   }
 
+  // ---------- Извештај за дежурство ----------
+  let lastDutyReport = "";
+  function buildDutyReportText() {
+    const now = new Date();
+    const p = SCH.currentPeriod(now);
+    const when = now.toLocaleString("mk-MK", { weekday: "long", year: "numeric", month: "long", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    const periodLabel = p.isDay ? "Дневна смена (07:00–19:00)" : "Ноќна смена (19:00–07:00)";
+    const lines = [];
+    lines.push("ТППЕ СТРУМИЦА — ИЗВЕШТАЈ ЗА ДЕЖУРСТВО");
+    lines.push("====================================");
+    lines.push("Генериран: " + when);
+    lines.push("Период: " + periodLabel);
+    lines.push("");
+    lines.push("1. СОСТАВ НА СМЕНИТЕ");
+    ROLES.forEach(([key, label]) => {
+      const n = p.slot[key];
+      const all = st.teams[n] || [];
+      const gone = new Set(st.absences[n] || []);
+      const present = all.filter(x => !gone.has(x));
+      const absent = all.filter(x => gone.has(x));
+      lines.push("");
+      lines.push(label + " — Смена " + n + " (" + present.length + "/" + all.length + " присутни)");
+      lines.push("  Присутни: " + (present.join(", ") || "—"));
+      if (absent.length) lines.push("  Отсутни: " + absent.join(", "));
+    });
+    const onField = Object.keys(st.fieldStatuses || {}).filter(k => st.fieldStatuses[k]);
+    const called = Object.keys(st.calledStatuses || {}).filter(k => st.calledStatuses[k]);
+    lines.push("");
+    lines.push("2. НА ТЕРЕН (" + onField.length + ")");
+    lines.push(onField.length ? ("  " + onField.join(", ")) : "  Нема означени.");
+    lines.push("");
+    lines.push("3. ПОВИКАНИ ОД ПРИПРАВНОСТ (" + called.length + ")");
+    lines.push(called.length ? ("  " + called.join(", ")) : "  Нема означени.");
+    lines.push("");
+    lines.push("4. АЛАРМ / ИНТЕРВЕНЦИЈА");
+    const alarm = st.alarm || {};
+    if (alarm.active) {
+      lines.push("  Статус: АКТИВЕН");
+      lines.push("  Место: " + ((alarm.location || "").trim() || "Не е наведено"));
+      lines.push("  Опис: " + ((alarm.details || "").trim() || "Не е наведен"));
+      if (alarm.startedAt) {
+        try { lines.push("  Започнат: " + new Date(alarm.startedAt).toLocaleString("mk-MK")); } catch (e) { /* ignore */ }
+      }
+    } else {
+      lines.push("  Статус: Нема активна интервенција.");
+    }
+    lines.push("");
+    lines.push("5. СООПШТЕНИЈА");
+    const sorted = [...(st.notices || [])].sort((a, b) => (b.ts || 0) - (a.ts || 0));
+    if (!sorted.length) lines.push("  Нема активни соопштенија.");
+    else sorted.slice(0, 15).forEach((n, i) => {
+      lines.push("  (" + (i + 1) + ") " + (n.date || "") + (n.date ? " — " : "") + String(n.text || "").replace(/\s+/g, " ").trim());
+    });
+    lines.push("");
+    lines.push("— Крај на извештајот —");
+    lines.push("(Состојба во моментот на генерирање)");
+    return lines.join("\n");
+  }
+  function openDutyReport() {
+    lastDutyReport = buildDutyReportText();
+    $("reportBox").textContent = lastDutyReport;
+    $("reportPanel").hidden = false;
+    $("reportHint").hidden = true;
+    $("reportChevron").style.transform = "rotate(180deg)";
+    toast("✓ Извештајот е генериран");
+  }
+  function closeDutyReport() {
+    const panel = $("reportPanel"); if (!panel) return;
+    panel.hidden = true;
+    $("reportBox").textContent = "";
+    $("reportHint").hidden = false;
+    $("reportChevron").style.transform = "";
+    lastDutyReport = "";
+  }
+  function toggleDutyReport() {
+    if (!$("reportPanel").hidden) { closeDutyReport(); return; }
+    window.TPPE_ADMIN.requireAdmin(openDutyReport);
+  }
+  function copyDutyReport() {
+    const text = lastDutyReport || buildDutyReportText();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => toast("✓ Копирано во clipboard")).catch(() => fallbackCopy(text));
+    } else fallbackCopy(text);
+  }
+  function fallbackCopy(text) {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.left = "-9999px";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); toast("✓ Копирано"); }
+    catch (e) { toast("Не може да се копира автоматски", true); }
+    document.body.removeChild(ta);
+  }
+
   window.TPPE_UI = {
-    $, h, toast, fail, isTv, renderAll, renderNotices, renderDuty, renderPhones, renderCalendar,
+    $, h, toast, fail, isTv, closeDutyReport, renderAll, renderNotices, renderDuty, renderPhones, renderCalendar,
     init() {
       S.on(what => {
         if (what === "data" || what === "fieldStatuses") { renderDuty(); if (what === "data") { renderNotices(); renderCalendar(); renderPhones(); renderAlarm(); checkNewNotice(); } }
@@ -296,6 +424,11 @@
       $("monthPrev").onclick = () => { monthDate = new Date(monthDate.getFullYear(), monthDate.getMonth() - 1, 1); renderCalendar(); };
       $("monthNext").onclick = () => { monthDate = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 1); renderCalendar(); };
       $("monthToday").onclick = () => { const n = new Date(); monthDate = new Date(n.getFullYear(), n.getMonth(), 1); selected = n; renderCalendar(); };
+      const rt = $("reportToggle");
+      rt.onclick = toggleDutyReport;
+      rt.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleDutyReport(); } };
+      $("reportCopyBtn").onclick = copyDutyReport;
+      $("reportCloseBtn").onclick = closeDutyReport;
       renderAll();
       setInterval(tickClock, 1000);
       loadWeather(); setInterval(loadWeather, 15 * 60 * 1000);

@@ -15,10 +15,20 @@
     try { on ? sessionStorage.setItem(OK_KEY, "1") : sessionStorage.removeItem(OK_KEY); } catch (e) {}
     $("btnAdmin").textContent = on ? "🔓 Заклучи" : "🔐 Админ";
     clearTimeout(idleTimer);
+    if (!on && UI.closeDutyReport) UI.closeDutyReport();
     if (on) idleTimer = setTimeout(() => setUnlocked(false), IDLE_MS);
     UI.renderNotices();
   }
   const touch = () => { if (isUnlocked()) { clearTimeout(idleTimer); idleTimer = setTimeout(() => setUnlocked(false), IDLE_MS); } };
+
+  // Бара админ пристап; ако е веќе отклучено веднаш ја извршува акцијата, инаку прво го отвора прозорецот за лозинка.
+  let afterUnlock = null;
+  function requireAdmin(cb) {
+    if (isUnlocked()) { cb(); return; }
+    afterUnlock = cb;
+    $("pinError").hidden = true; $("pinInput").value = "";
+    $("pinDialog").showModal(); $("pinInput").focus();
+  }
 
   function init() {
     try { if (sessionStorage.getItem(OK_KEY) === "1") setUnlocked(true); } catch (e) {}
@@ -26,17 +36,23 @@
 
     $("btnAdmin").addEventListener("click", () => {
       if (isUnlocked()) { setUnlocked(false); return; }
-      $("pinError").hidden = true; $("pinInput").value = "";
-      dlg.showModal(); $("pinInput").focus();
+      requireAdmin(null);
     });
     $("pinCancel").addEventListener("click", () => dlg.close());
+    // клик на позадината надвор од прозорецот = назад; затворањето (и Esc) ја чисти акцијата
+    dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); });
+    dlg.addEventListener("close", () => { $("pinInput").value = ""; afterUnlock = null; });
     $("pinForm").addEventListener("submit", e => {
       e.preventDefault();
       if (st.adminPin == null) {
         $("pinError").textContent = "Нема врска со базата — лозинката не може да се провери.";
         $("pinError").hidden = false; return;
       }
-      if ($("pinInput").value === st.adminPin) { dlg.close(); setUnlocked(true); }
+      if ($("pinInput").value === st.adminPin) {
+        const cb = afterUnlock; afterUnlock = null;
+        dlg.close(); setUnlocked(true);
+        if (typeof cb === "function") cb();
+      }
       else { $("pinError").textContent = "Погрешна лозинка"; $("pinError").hidden = false; }
     });
 
@@ -63,5 +79,5 @@
     $("adminCard").addEventListener("keydown", touch);
   }
 
-  window.TPPE_ADMIN = { init };
+  window.TPPE_ADMIN = { init, requireAdmin };
 })();

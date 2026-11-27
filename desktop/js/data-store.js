@@ -16,6 +16,7 @@
     notices: [],
     alarm: { active: false, location: "", details: "" },
     fieldStatuses: {},
+    calledStatuses: {},
     adminPin: null,      // само во меморија, никогаш во localStorage
     chat: [],
     loaded: false,       // стигнале ли се податоци од облак
@@ -56,8 +57,15 @@
   function start() {
     loadCache();
 
+    let fieldLocalTs = 0;
     FIELD.onSnapshot(snap => {
-      state.fieldStatuses = snap.exists ? (snap.data().statuses || {}) : {};
+      const data = snap.exists ? snap.data() : {};
+      const serverTs = data.updatedAt || 0;
+      // Не пребришувај понова локална промена со постари податоци од серверот
+      if (serverTs && serverTs < fieldLocalTs) return;
+      state.fieldStatuses = data.statuses || {};
+      state.calledStatuses = data.called || {};
+      if (serverTs) fieldLocalTs = serverTs;
       emit("fieldStatuses");
     }, err => {
       console.error("Field-status sync error:", err);
@@ -132,15 +140,60 @@
   }
 
   // Статусите се чуваат во посебниот заеднички документ appdata/fieldStatuses,
-  // истата патека и формат што ги користи мобилната апликација.
+  // истата патека што ја користи мобилната апликација.
+  // statuses = на терен (трепка), called = повикани од приправност (бела боја).
+  function applyLocalField(name, kind, active) {
+    const statuses = Object.assign({}, state.fieldStatuses);
+    const called = Object.assign({}, state.calledStatuses);
+    if (kind === "field") {
+      if (active) { statuses[name] = true; delete called[name]; }
+      else delete statuses[name];
+    } else {
+      if (active) { called[name] = true; delete statuses[name]; }
+      else delete called[name];
+    }
+    state.fieldStatuses = statuses;
+    state.calledStatuses = called;
+    fieldLocalTs = Date.now();
+    emit("fieldStatuses");
+  }
+
   function setFieldStatus(name, active) {
+    applyLocalField(name, "field", active);
     return db.runTransaction(async t => {
       const snap = await t.get(FIELD);
-      const statuses = Object.assign({}, (snap.exists && snap.data().statuses) || {});
-      if (active) statuses[name] = true;
-      else delete statuses[name];
-      t.set(FIELD, { statuses, updatedAt: Date.now() }, { merge: true });
-    });
+      const data = (snap.exists && snap.data()) || {};
+      const statuses = Object.assign({}, data.statuses || {});
+      const called = Object.assign({}, data.called || {});
+      if (active) {
+        statuses[name] = true;
+        delete called[name];
+      } else {
+        delete statuses[name];
+      }
+      const updatedAt = Date.now();
+      t.set(FIELD, { statuses, called, updatedAt });
+      return updatedAt;
+    }).then(ts => { if (ts && ts > fieldLocalTs) fieldLocalTs = ts; });
+  }
+
+  function setCalledStatus(name, active) {
+    applyLocalField(name, "called", active);
+    return db.runTransaction(async t => {
+      const snap = await t.get(FIELD);
+      const data = (snap.exists && snap.data()) || {};
+      const statuses = Object.assign({}, data.statuses || {});
+      const called = Object.assign({}, data.called || {});
+      if (active) {
+        called[name] = true;
+        delete statuses[name];
+      } else {
+        delete called[name];
+      }
+      const updatedAt = Date.now();
+      t.set(FIELD, { statuses, called, updatedAt });
+      return updatedAt;
+    }).then(ts => { if (ts && ts > fieldLocalTs) fieldLocalTs = ts; });
   }
 
   function sendChat(name, text) {
@@ -151,5 +204,5 @@
     });
   }
 
-  window.TPPE_STORE = { state, on, start, setAbsent, setFieldStatus, addNotice, deleteNotice, setAlarm, sendChat };
+  window.TPPE_STORE = { state, on, start, setAbsent, setFieldStatus, setCalledStatus, addNotice, deleteNotice, setAlarm, sendChat };
 })();
