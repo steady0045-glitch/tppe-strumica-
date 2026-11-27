@@ -40,7 +40,12 @@ input[type=date],input[type=text],input[type=tel],input[type=password],textarea{
 .team-2{border-left-color:#fbbf24}.team-2 h3,.team-2 .names{color:#fcd34d}
 .team-3{border-left-color:#60a5fa}.team-3 h3,.team-3 .names{color:#93c5fd}
 .team-4{border-left-color:#4ade80}.team-4 h3,.team-4 .names{color:#86efac}
-.field-status-name{display:inline;cursor:pointer;touch-action:manipulation}.field-status-name.on-field{color:#fff!important;font-weight:800;text-shadow:0 0 7px rgba(255,255,255,.35)}.field-status-name.on-field a{color:#fff!important}.field-status-hint{font-size:.72rem;color:#94a3b8;margin-top:5px}
+.field-status-name{display:inline;cursor:pointer;touch-action:manipulation;user-select:none}
+.field-status-name.on-field{font-weight:800;animation:field-blink 1s ease-in-out infinite}
+.field-status-name.called{color:#fff!important;font-weight:800;text-shadow:0 0 7px rgba(255,255,255,.35)}
+.field-status-name.called a{color:#fff!important}
+@keyframes field-blink{0%,100%{opacity:1}50%{opacity:.25}}
+.field-status-hint{font-size:.72rem;color:#94a3b8;margin-top:5px}
 .shield{display:inline-flex;width:22px;height:22px;vertical-align:middle;flex-shrink:0}
 .shield svg{width:22px;height:22px;display:block}
 #currentDuty{background:linear-gradient(135deg,#1e3a5f,#1e293b);border:1px solid #3b82f6;position:relative;overflow:hidden}
@@ -419,7 +424,7 @@ header .emblem-face.back .year-193{
 <div id="syncStatus">Се поврзува...</div>
 <div id="alarmBanner"><div class="alarm-banner-title">🚨 ИНТЕРВЕНЦИЈА ВО ТЕК</div><div class="alarm-banner-detail" id="alarmLocationLine">Место: <span id="alarmLocationText"></span></div><div class="alarm-banner-detail" id="alarmDetailsLine">Што гори / опис: <span id="alarmDetailsText"></span></div></div>
 <div class="panel" id="currentDuty">
-  <h2>🔴 Во моментов <span class="now-badge">LIVE</span><span id="fieldCountBadge" style="float:right;display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;padding:0 8px;border-radius:50%;background:#dc2626;color:#fff;font-size:.9rem;font-weight:800" title="Пожарникари на терен">0</span></h2>
+  <h2>🔴 Во моментов <span class="now-badge">LIVE</span><span style="float:right;display:inline-flex;align-items:center;gap:6px"><span id="calledCountBadge" style="display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;padding:0 8px;border-radius:50%;background:#1e3a8a;color:#fff;font-size:.9rem;font-weight:800" title="Повикани од приправност">0</span><span id="fieldCountBadge" style="display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;padding:0 8px;border-radius:50%;background:#dc2626;color:#fff;font-size:.9rem;font-weight:800" title="Пожарникари на терен">0</span></span></h2>
   <div id="currentContent">Се вчитува...</div>
   <div class="live-time" id="liveClock"></div>
 </div>
@@ -704,7 +709,9 @@ const DEFAULT_SERVICE = {"Дежурен центар":"","Директор":"",
 let teams = JSON.parse(JSON.stringify(DEFAULT_TEAMS));
 let absences = {1:[],2:[],3:[],4:[]};
 let fieldStatuses = {};
+let calledStatuses = {};
 let fieldTapTimers = {};
+let fieldHoldTimers = {};
 let phones = {};
 let servicePhones = JSON.parse(JSON.stringify(DEFAULT_SERVICE));
 let notices = [];
@@ -722,20 +729,27 @@ function getSlot(date,hour){
   return {duty,standby,next,free};
 }
 function names(n){
-  // Имињата ја задржуваат бојата на матичната смена; бело означува „На терен“.
+  // Трепка = на терен; бело = повикан од приправност.
   const absent=new Set(absences[n]||[]);
   return (teams[n]||[]).filter(name=>!absent.has(name)).map(name=>{
     const tel=phones[name];
     const safe=JSON.stringify(name).replace(/</g,'\\u003c');
-    const active=!!fieldStatuses[name];
+    const onField=!!fieldStatuses[name];
+    const isCalled=!!calledStatuses[name];
+    let cls='field-status-name';
+    if(onField) cls+=' on-field';
+    else if(isCalled) cls+=' called';
     const label=tel?`<a href="tel:${tel.replace(/\s+/g,'')}" onclick='return fieldNameTap(event,${safe},${JSON.stringify(tel).replace(/</g,'\\u003c')})' style="color:inherit;text-decoration:underline">${escapeHTML(name)}</a>`:`${escapeHTML(name)}`;
-    return `<span class="field-status-name ${active?'on-field':''}" onclick='fieldNameTap(event,${safe},${tel?JSON.stringify(tel).replace(/</g,'\\u003c'):"null"})'>${label}</span>`;
+    return `<span class="${cls}" onclick='fieldNameTap(event,${safe},${tel?JSON.stringify(tel).replace(/</g,'\\u003c'):"null"})' onpointerdown='fieldNameHoldStart(event,${safe})' onpointerup='fieldNameHoldEnd(event,${safe})' onpointerleave='fieldNameHoldEnd(event,${safe})' onpointercancel='fieldNameHoldEnd(event,${safe})'>${label}</span>`;
   }).join(" • ") || '<span style="color:#94a3b8">Нема присутни членови</span>';
 }
-// Двоен клик на компјутер и двоен допир на телефон го менуваат статусот.
-// Единечен допир на име со телефонски број и понатаму го повикува бројот.
+// Двоен клик/допир → на терен (трепка). Задржување → повикан (бела). Единечен допир со тел. → повик.
 function fieldNameTap(event,name,tel){
   if(event){event.preventDefault();event.stopPropagation();}
+  if(fieldHoldTimers[name] && fieldHoldTimers[name].triggered){
+    delete fieldHoldTimers[name];
+    return false;
+  }
   if(fieldTapTimers[name]){
     clearTimeout(fieldTapTimers[name]);delete fieldTapTimers[name];
     toggleFieldStatus(name);
@@ -747,19 +761,68 @@ function fieldNameTap(event,name,tel){
   },380);
   return false;
 }
+function fieldNameHoldStart(event,name){
+  if(event && event.button!=null && event.button!==0) return;
+  if(fieldHoldTimers[name]){clearTimeout(fieldHoldTimers[name].timer);}
+  fieldHoldTimers[name]={triggered:false,timer:setTimeout(()=>{
+    if(fieldHoldTimers[name]) fieldHoldTimers[name].triggered=true;
+    if(fieldTapTimers[name]){clearTimeout(fieldTapTimers[name]);delete fieldTapTimers[name];}
+    toggleCalledStatus(name);
+  },550)};
+}
+function fieldNameHoldEnd(event,name){
+  if(fieldHoldTimers[name] && !fieldHoldTimers[name].triggered){
+    clearTimeout(fieldHoldTimers[name].timer);
+    delete fieldHoldTimers[name];
+  }
+}
+let fieldStatusesLocalTs=0;
 function toggleFieldStatus(name){
-  fieldStatuses[name]=!fieldStatuses[name];
-  if(!fieldStatuses[name]) delete fieldStatuses[name];
+  const next=!fieldStatuses[name];
+  if(next){fieldStatuses[name]=true;delete calledStatuses[name];}
+  else delete fieldStatuses[name];
+  fieldStatusesLocalTs=Date.now();
   render(window.IS_ADMIN);
   updateCurrentDuty();
-  try{localStorage.setItem('tppeFieldStatuses',JSON.stringify(fieldStatuses));}catch(e){}
-  saveFieldStatusesToCloud();
+  try{localStorage.setItem('tppeFieldStatuses',JSON.stringify({statuses:fieldStatuses,called:calledStatuses,updatedAt:fieldStatusesLocalTs}));}catch(e){}
+  saveFieldStatusTransaction(name,'field',next);
 }
-let fieldStatusSaveQueue=Promise.resolve();
-function saveFieldStatusesToCloud(){
-  const snapshot=JSON.parse(JSON.stringify(fieldStatuses));
-  fieldStatusSaveQueue=fieldStatusSaveQueue.catch(()=>{}).then(()=>db.collection('appdata').doc('fieldStatuses').set({statuses:snapshot,updatedAt:Date.now()}));
-  fieldStatusSaveQueue.catch(err=>{if(typeof showToast==='function')showToast('Неуспешна синхронизација на статусите. Проверете интернет.',true);});
+function toggleCalledStatus(name){
+  const next=!calledStatuses[name];
+  if(next){calledStatuses[name]=true;delete fieldStatuses[name];}
+  else delete calledStatuses[name];
+  fieldStatusesLocalTs=Date.now();
+  render(window.IS_ADMIN);
+  updateCurrentDuty();
+  try{localStorage.setItem('tppeFieldStatuses',JSON.stringify({statuses:fieldStatuses,called:calledStatuses,updatedAt:fieldStatusesLocalTs}));}catch(e){}
+  saveFieldStatusTransaction(name,'called',next);
+  if(typeof showToast==='function'){
+    showToast(next ? '✓ '+name+' е означен/а: ПОВИКАН' : '✓ '+name+' е вратен/а од повикани');
+  }
+}
+function saveFieldStatusTransaction(name,kind,active){
+  const FIELD=db.collection('appdata').doc('fieldStatuses');
+  db.runTransaction(async t=>{
+    const snap=await t.get(FIELD);
+    const data=(snap.exists&&snap.data())||{};
+    const statuses=Object.assign({},data.statuses||{});
+    const called=Object.assign({},data.called||{});
+    if(kind==='field'){
+      if(active){statuses[name]=true;delete called[name];}
+      else delete statuses[name];
+    } else {
+      if(active){called[name]=true;delete statuses[name];}
+      else delete called[name];
+    }
+    const updatedAt=Date.now();
+    t.set(FIELD,{statuses,called,updatedAt});
+    return updatedAt;
+  }).then(ts=>{
+    if(ts&&ts>fieldStatusesLocalTs) fieldStatusesLocalTs=ts;
+  }).catch(err=>{
+    if(typeof showToast==='function') showToast('Неуспешна синхронизација на статусите. Проверете интернет.',true);
+    console.warn('Field status write:',err);
+  });
 }
 
 function updateAlarmUI(){
@@ -782,7 +845,9 @@ function updateAlarmUI(){
 }
 function updateCurrentDuty(){
   const fieldCount=Object.values(fieldStatuses||{}).filter(Boolean).length;
+  const calledCount=Object.values(calledStatuses||{}).filter(Boolean).length;
   const countBadge=document.getElementById("fieldCountBadge");if(countBadge)countBadge.textContent=String(fieldCount);
+  const calledBadge=document.getElementById("calledCountBadge");if(calledBadge)calledBadge.textContent=String(calledCount);
   const now=new Date();
   const hour=now.getHours();
   const isDay=hour>=7&&hour<19;
@@ -822,7 +887,7 @@ function updateCurrentDuty(){
       <h3>${shield(slot.free)} Слободна — Смена ${slot.free}</h3>
       <div class="names">${names(slot.free)}</div>
     </div>
-    <p class="field-status-hint">Двоен клик / двоен допир на име: бело = НА ТЕРЕН.</p>
+    <p class="field-status-hint">Двоен клик/допир: трепка = НА ТЕРЕН · Задржи клик: бело = ПОВИКАН од приправност.</p>
     <p class="note" style="margin-top:10px">Редослед: дежурна → приправна → наредна → слободна. ${untilChange}.</p>`;
   document.getElementById("liveClock").textContent=now.toLocaleString("mk-MK",{weekday:"long",day:"2-digit",month:"long",hour:"2-digit",minute:"2-digit",second:"2-digit"});
 }
@@ -1106,13 +1171,25 @@ db.collection("appdata").doc("main").onSnapshot(
   },
   (err)=>{document.getElementById("syncStatus").textContent="Офлајн / грешка";document.getElementById("syncStatus").style.color="#fbbf24";}
 );
-// Заеднички статуси „На терен“ во посебен документ за да не се мешаат
+// Заеднички статуси „На терен“ / „Повикан“ во посебен документ за да не се мешаат
 // со административното зачувување на распоредот.
-try{fieldStatuses=JSON.parse(localStorage.getItem('tppeFieldStatuses')||'{}')||{};}catch(e){fieldStatuses={};}
+try{
+  const cached=JSON.parse(localStorage.getItem('tppeFieldStatuses')||'{}')||{};
+  if(cached.statuses||cached.called){
+    fieldStatuses=cached.statuses||{};
+    calledStatuses=cached.called||{};
+    fieldStatusesLocalTs=cached.updatedAt||0;
+  } else {fieldStatuses=cached;calledStatuses={};}
+}catch(e){fieldStatuses={};calledStatuses={};}
 db.collection('appdata').doc('fieldStatuses').onSnapshot(snap=>{
-  if(snap.exists){fieldStatuses=snap.data().statuses||{};}
-  else fieldStatuses={};
-  try{localStorage.setItem('tppeFieldStatuses',JSON.stringify(fieldStatuses));}catch(e){}
+  const d=snap.exists?(snap.data()||{}):{};
+  const serverTs=d.updatedAt||0;
+  // Не пребришувај понова локална промена со постари податоци од серверот
+  if(serverTs && serverTs<fieldStatusesLocalTs) return;
+  fieldStatuses=d.statuses||{};
+  calledStatuses=d.called||{};
+  if(serverTs) fieldStatusesLocalTs=serverTs;
+  try{localStorage.setItem('tppeFieldStatuses',JSON.stringify({statuses:fieldStatuses,called:calledStatuses,updatedAt:fieldStatusesLocalTs}));}catch(e){}
   render(window.IS_ADMIN);updateCurrentDuty();
 },err=>console.warn('Field status sync:',err));
 function hideSplash(){const s=document.getElementById("splash");if(s){s.classList.add("hide");setTimeout(()=>s.remove(),500)}}
