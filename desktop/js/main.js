@@ -9,12 +9,12 @@
 
   // Чат: името е заедничко со мобилната (истиот клуч во истиот домен)
   const nameIn = $("chatName"), textIn = $("chatText");
-  try { nameIn.value = localStorage.getItem("tppeChatDisplayName") || ""; } catch (e) {}
+  try { nameIn.value = localStorage.getItem("tppeDesktopChatDisplayName") || ""; } catch (e) {}
   async function send() {
     const name = nameIn.value.trim(), text = textIn.value.trim();
     if (!name) { UI.toast("Внеси го твоето име и презиме.", true); nameIn.focus(); return; }
     if (!text) { textIn.focus(); return; }
-    try { localStorage.setItem("tppeChatDisplayName", name); } catch (e) {}
+    try { localStorage.setItem("tppeDesktopChatDisplayName", name); } catch (e) {}
     try { await S.sendChat(name, text); textIn.value = ""; } catch (e) { UI.fail(e); }
   }
   $("chatSend").addEventListener("click", send);

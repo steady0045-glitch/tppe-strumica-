@@ -5,6 +5,7 @@
   const db = window.tppeDb;
   const SCH = window.TPPE_SCHEDULE;
   const MAIN = db.collection("appdata").doc("main");
+  const FIELD = db.collection("appdata").doc("fieldStatuses");
   const CACHE_KEY = "tppeDesktopCache"; // посебен клуч, не го допира "tppeCache" на мобилната
 
   const state = {
@@ -14,6 +15,7 @@
     servicePhones: JSON.parse(JSON.stringify(SCH.DEFAULT_SERVICE)),
     notices: [],
     alarm: { active: false, location: "", details: "" },
+    fieldStatuses: {},
     adminPin: null,      // само во меморија, никогаш во localStorage
     chat: [],
     loaded: false,       // стигнале ли се податоци од облак
@@ -53,6 +55,14 @@
 
   function start() {
     loadCache();
+
+    FIELD.onSnapshot(snap => {
+      state.fieldStatuses = snap.exists ? (snap.data().statuses || {}) : {};
+      emit("fieldStatuses");
+    }, err => {
+      console.error("Field-status sync error:", err);
+      emit("fieldStatusError");
+    });
 
     MAIN.onSnapshot(snap => {
       if (snap.exists) {
@@ -121,6 +131,18 @@
     return MAIN.set({ alarm }, { merge: true });
   }
 
+  // Статусите се чуваат во посебниот заеднички документ appdata/fieldStatuses,
+  // истата патека и формат што ги користи мобилната апликација.
+  function setFieldStatus(name, active) {
+    return db.runTransaction(async t => {
+      const snap = await t.get(FIELD);
+      const statuses = Object.assign({}, (snap.exists && snap.data().statuses) || {});
+      if (active) statuses[name] = true;
+      else delete statuses[name];
+      t.set(FIELD, { statuses, updatedAt: Date.now() }, { merge: true });
+    });
+  }
+
   function sendChat(name, text) {
     return db.collection("chatMessages").add({
       name, text,
@@ -129,5 +151,5 @@
     });
   }
 
-  window.TPPE_STORE = { state, on, start, setAbsent, addNotice, deleteNotice, setAlarm, sendChat };
+  window.TPPE_STORE = { state, on, start, setAbsent, setFieldStatus, addNotice, deleteNotice, setAlarm, sendChat };
 })();

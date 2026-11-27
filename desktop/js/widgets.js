@@ -82,7 +82,20 @@
 
   function chip(name, team, isAbsent) {
     const tel = st.phones[name];
-    const c = h("span", { class: "chip" + (isAbsent ? " absent" : ""), title: tel || "" }, [h("span", { text: name })]);
+    const onField = !!st.fieldStatuses[name];
+    const nameNode = h("span", {
+      class: "chip-name" + (onField ? " on-field" : ""),
+      text: name,
+      title: onField ? "На терен — двоен клик за враќање" : "Двоен клик за означување: На терен",
+      ondblclick: event => {
+        event.preventDefault();
+        const next = !st.fieldStatuses[name];
+        S.setFieldStatus(name, next)
+          .then(() => toast(next ? "✓ " + name + " е означен/а: НА ТЕРЕН" : "✓ " + name + " е вратен/а во редовен статус"))
+          .catch(fail);
+      }
+    });
+    const c = h("span", { class: "chip" + (isAbsent ? " absent" : ""), title: tel || "" }, [nameNode]);
     if (!isTv()) {
       c.append(h("button", {
         type: "button", class: "chip-btn", text: isAbsent ? "Врати" : "Отсутен",
@@ -103,6 +116,7 @@
       h("span", { class: "period-label", text: p.isDay ? "☀️ Дневна смена (07:00–19:00)" : "🌙 Ноќна смена (19:00–07:00)" }),
       h("span", { class: "period-count" }, [document.createTextNode("до промена: "), h("b", { id: "countdown", text: "--:--:--" })])
     ]));
+    body.append(h("div", { class: "field-status-hint", text: "Двоен клик на име: бело = НА ТЕРЕН · повторен двоен клик = редовен статус" }));
 
     ROLES.forEach(([key, label], i) => {
       const n = p.slot[key];
@@ -272,7 +286,7 @@
     $, h, toast, fail, isTv, renderAll, renderNotices, renderDuty, renderPhones, renderCalendar,
     init() {
       S.on(what => {
-        if (what === "data") { renderDuty(); renderNotices(); renderCalendar(); renderPhones(); renderAlarm(); checkNewNotice(); }
+        if (what === "data" || what === "fieldStatuses") { renderDuty(); if (what === "data") { renderNotices(); renderCalendar(); renderPhones(); renderAlarm(); checkNewNotice(); } }
         else if (what === "chat") renderChat();
         else if (what === "sync") renderSync();
       });
